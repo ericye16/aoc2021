@@ -1,5 +1,5 @@
 [workspace]
 
 members = [
-    "d1", "d2", "d3", "common",
+    "d1", "d2", "d3", "common", "d4",
 ]
