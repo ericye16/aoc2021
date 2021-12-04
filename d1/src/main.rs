@@ -133,8 +133,7 @@ mod test {
 
     #[test]
     fn test_p1() {
-        let input = 
-"199
+        let input = "199
 200
 208
 210
@@ -149,8 +148,7 @@ mod test {
 
     #[test]
     fn test_p2() {
-        let input = 
-"199
+        let input = "199
 200
 208
 210

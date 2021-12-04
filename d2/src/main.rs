@@ -91,7 +91,7 @@ fn p2(input: &str) -> Result<i32> {
             "forward" => {
                 forward += val;
                 depth += aim * val;
-            },
+            }
             "down" => aim += val,
             "up" => aim -= val,
             &_ => {
