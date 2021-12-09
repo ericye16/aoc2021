@@ -177,7 +177,7 @@ fn p2(input: &Vec<Vec<u8>>) -> Result<i32> {
 }
 
 fn main() -> Result<()> {
-    let input = read_file("d3.txt")?;
+    let input = read_file("d3.txt");
     let input = parse_input(&input);
     println!("p1: {}", p1(&input)?);
     println!("p2: {}", p2(&input)?);

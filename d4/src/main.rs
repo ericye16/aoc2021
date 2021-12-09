@@ -180,7 +180,7 @@ fn p2(sequence: &Sequence, cards: &[Card]) -> Result<u32> {
 
 
 fn main() -> Result<()> {
-    let input = common::read_file("d4.txt")?;
+    let input = common::read_file("d4.txt");
     let (sequence, cards) = parse_input(&input)?;
     println!("p1: {}", p1(&sequence, &cards)?);
     println!("p2: {}", p2(&sequence, &cards)?);

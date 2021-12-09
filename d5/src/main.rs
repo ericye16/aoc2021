@@ -169,7 +169,7 @@ fn p2(input: &str) -> i32 {
 }
 
 fn main() -> Result<()> {
-    let input = common::read_file("d5.txt")?;
+    let input = common::read_file("d5.txt");
     println!("P1: {}", p1(&input));
     println!("P2: {}", p2(&input));
     Ok(())
