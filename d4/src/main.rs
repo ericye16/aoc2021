@@ -169,7 +169,7 @@ fn p2(sequence: &Sequence, cards: &[Card]) -> Result<u32> {
             if is_winning(card, &already_called) {
                 if already_won.len() == num_cards - 1 {
                     // This is the last card
-                    return Ok(calculate_score(card, &already_called,*number))
+                    return Ok(calculate_score(card, &already_called, *number));
                 }
                 already_won.insert(idx);
             }
@@ -177,7 +177,6 @@ fn p2(sequence: &Sequence, cards: &[Card]) -> Result<u32> {
     }
     Err(anyhow!("Out of numbers!"))
 }
-
 
 fn main() -> Result<()> {
     let input = common::read_file("d4.txt");
