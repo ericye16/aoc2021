@@ -1,5 +1,5 @@
 [workspace]
 
 members = [
-    "d1", "d2", "d3", "common", "d4", "d5", "d6", "d9", "d7", "d8",
+    "d1", "d2", "d3", "common", "d4", "d5", "d6", "d9", "d7", "d8", "d10",
 ]

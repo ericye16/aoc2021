@@ -20,6 +20,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "d10"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "lazy_static",
+]
+
+[[package]]
 name = "d2"
 version = "0.1.0"
 dependencies = [
