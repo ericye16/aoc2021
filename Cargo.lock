@@ -42,6 +42,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "d13"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "text_io",
+]
+
+[[package]]
 name = "d2"
 version = "0.1.0"
 dependencies = [
