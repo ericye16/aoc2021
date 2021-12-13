@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as FmtWrite;
 
 /*
@@ -142,16 +142,15 @@ Adding all of the output values in this larger example produces 61229.
 For each entry, determine all of the wire/segment connections and decode the four-digit output values. What do you get if you add up all of the output values?
 */
 
-type Possibilities = BTreeMap<u8, BTreeMap<u8, bool>>;
+type Possibilities = BTreeMap<u8, BTreeSet<u8>>;
 
+#[allow(dead_code)]
 fn display_possibility(possibilities: &Possibilities) {
     println!("Possibilities:");
     for (segment, possibility_for_segment) in possibilities.iter() {
         let mut s = String::new();
-        for (segment_to_match, is_matching) in possibility_for_segment {
-            if *is_matching {
-                write!(&mut s, "{}, ", *segment_to_match as char).unwrap();
-            }
+        for segment_to_match in possibility_for_segment {
+            write!(&mut s, "{}, ", *segment_to_match as char).unwrap();
         }
         println!("{}: {}", *segment as char, s);
     }
@@ -160,17 +159,17 @@ fn display_possibility(possibilities: &Possibilities) {
 fn create_all_possibilities() -> Possibilities {
     let mut h = BTreeMap::new();
     for a in b'a'..(b'g' + 1) {
-        h.insert(a, BTreeMap::new());
+        let mut ts = BTreeSet::new();
         for b in b'a'..(b'g' + 1) {
-            h.get_mut(&a).unwrap().insert(b, true);
+            ts.insert(b);
         }
+        h.insert(a, ts);
     }
     h
 }
 
 #[derive(Debug, PartialEq, Eq)]
 struct DigitSpec {
-    segments_idx: BTreeMap<u8, bool>,
     segments_set: BTreeSet<u8>,
 }
 
@@ -196,7 +195,6 @@ fn get_digit_spec(digit: u8) -> DigitSpec {
         h.insert(*seg, true);
     }
     DigitSpec {
-        segments_idx: h,
         segments_set: BTreeSet::from_iter(arr.clone()),
     }
 }
@@ -218,14 +216,15 @@ lazy_static! {
     };
 }
 
+// We know that all characters in segment correspond to the digit given
 fn eliminate(digit_spec: &DigitSpec, segments: &str, possibilities: &mut Possibilities) {
     for ch in segments.bytes() {
         let possibility_for_ch = possibilities.get_mut(&ch).unwrap();
-        for possibility in b'a'..(b'g' + 1) {
+        *possibility_for_ch = BTreeSet::from_iter(
             possibility_for_ch
-                .entry(possibility)
-                .and_modify(|v| *v = *v && *digit_spec.segments_idx.get(&possibility).unwrap());
-        }
+                .intersection(&digit_spec.segments_set)
+                .copied(),
+        );
     }
 }
 
@@ -260,38 +259,29 @@ fn process_digit(digit: &str, possibilities: &mut Possibilities) {
     };
 }
 
-fn get_single_possibility(possibilities_for_ch: &BTreeMap<u8, bool>) -> Option<u8> {
-    let mut singleton = None;
-    let num = possibilities_for_ch
-        .iter()
-        .fold(0, |acc, (possibility, b)| {
-            acc + if *b {
-                singleton = Some(*possibility);
-                1
-            } else {
-                0
-            }
-        });
-    if num == 1 {
-        singleton
+fn get_single_possibility(possibilities_for_ch: &BTreeSet<u8>) -> Option<u8> {
+    if possibilities_for_ch.len() == 1 {
+        possibilities_for_ch.iter().next().copied()
     } else {
         None
     }
 }
 
-fn find_known(possibilities: &Possibilities) -> Vec<(u8, u8)> {
-    let mut known = vec![];
+type Trial = BTreeMap<u8, u8>;
+
+fn find_known(possibilities: &Possibilities) -> Trial {
+    let mut known = BTreeMap::new();
     for (segment, possibilities_for_segment) in possibilities.iter() {
         if let Some(singleton) = get_single_possibility(possibilities_for_segment) {
-            known.push((*segment, singleton));
+            known.insert(*segment, singleton);
         }
     }
     known
 }
 
+// Returns if possibilities are still feasible or not (empty possibilities)
 fn propagate_possibilities(possibilities: &mut Possibilities) -> bool {
     let mut modified = true;
-    let mut num_loops = 0;
     while modified {
         modified = false;
         let known = find_known(possibilities);
@@ -300,31 +290,77 @@ fn propagate_possibilities(possibilities: &mut Possibilities) -> bool {
                 if segment == *segment_i {
                     continue;
                 }
-                segment_i_possibilities.entry(true_segment).and_modify(|e| {
-                    if *e {
-                        modified = true;
-                        *e = false;
-                    }
-                });
+                modified |= segment_i_possibilities.remove(&true_segment);
+                if segment_i_possibilities.len() == 0 {
+                    return false;
+                }
             }
         }
-        num_loops += 1;
     }
-    num_loops > 1
+    true
 }
 
 fn segments_to_number(segments: &BTreeSet<u8>) -> Option<u8> {
     REVERSE_MAP.get(&segments).copied()
 }
 
-type Trial = BTreeMap<u8, u8>;
-
 fn segments_to_segments(segments: &str, trial: &Trial) -> BTreeSet<u8> {
     BTreeSet::from_iter(segments.bytes().map(|i| *trial.get(&i).unwrap()))
 }
 
-fn make_trials(possibilities: &Possibilities) {
-    let mut trial: Trial;
+fn is_feasible(trial: &Trial, digits: &[&str]) -> Option<Vec<u8>> {
+    assert_eq!(trial.len(), 7);
+    let mut output_digits = vec![];
+    for digit in digits {
+        let segments = segments_to_segments(digit, trial);
+        if let Some(number) = segments_to_number(&segments) {
+            output_digits.push(number);
+        } else {
+            return None;
+        }
+    }
+    Some(output_digits)
+}
+
+fn chars_to_real_num(nums: &[u8]) -> i32 {
+    let mut n: i32 = 0;
+    for num in nums {
+        n *= 10;
+        n += *num as i32;
+    }
+    n
+}
+
+fn search(mut possibilities: Possibilities, digits: &[&str]) -> Option<(Trial, Vec<u8>)> {
+    if !propagate_possibilities(&mut possibilities) {
+        return None;
+    }
+    let known = find_known(&possibilities);
+    if known.len() == 7 {
+        if let Some(out_digits) = is_feasible(&known, digits) {
+            return Some((known, out_digits));
+        } else {
+            return None;
+        }
+    }
+    let mut to_choose = b'a';
+    let mut min_len_elements = usize::MAX;
+    for (ch, s) in &possibilities {
+        if s.len() > 1 && s.len() < min_len_elements {
+            to_choose = *ch;
+            min_len_elements = s.len();
+        }
+    }
+    for segment_target in &possibilities[&to_choose] {
+        let mut narrow_possibilities = possibilities.clone();
+        let mut new_target = BTreeSet::new();
+        new_target.insert(*segment_target);
+        *narrow_possibilities.get_mut(&to_choose).unwrap() = new_target;
+        if let Some(solution) = search(narrow_possibilities, digits) {
+            return Some(solution);
+        }
+    }
+    None
 }
 
 // Does an algorithm exist for this? idk
@@ -334,20 +370,19 @@ fn p2_single_line(input: &str) -> i32 {
     let left_part = single_line_parts[0].trim();
     let right_part = single_line_parts[1].trim();
     let mut possibilities = create_all_possibilities();
+    let mut all_digits = vec![];
     for digit in left_part.split(" ") {
-        println!("Digit: {}", digit);
         process_digit(digit, &mut possibilities);
-        display_possibility(&possibilities);
+        // display_possibility(&possibilities);
+        all_digits.push(digit);
     }
-    println!("Propagating units");
-    propagate_possibilities(&mut possibilities);
-    display_possibility(&possibilities);
-    let known: Vec<(char, char)> = find_known(&possibilities)
-        .iter()
-        .map(|(a, b)| (*a as char, *b as char))
-        .collect();
-    println!("{:?}", known);
-    todo!()
+    for digit in right_part.split(" ") {
+        process_digit(digit, &mut possibilities);
+        all_digits.push(digit);
+    }
+    let search_result = search(possibilities, &all_digits).unwrap();
+    // println!("Search result: {:?}", search_result);
+    chars_to_real_num(&search_result.1[10..14])
 }
 
 fn p2(input: &str) -> i32 {
