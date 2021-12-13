@@ -97,11 +97,11 @@ start-RW
 How many paths through this cave system are there that visit small caves at most once?
 */
 
-type Cave = String;
+type Cave<'a> = &'a str;
 
-type CaveSystem = HashMap<Cave, Vec<Cave>>;
+type CaveSystem<'a> = HashMap<Cave<'a>, Vec<Cave<'a>>>;
 
-type CavePath = Vec<String>;
+type CavePath<'a> = Vec<Cave<'a>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CaveType {
@@ -127,25 +127,25 @@ fn parse_cave_system(input: &str) -> CaveSystem {
         let first_cave = cave_connections[0];
         let second_cave = cave_connections[1];
         cave_system
-            .entry(first_cave.to_string())
+            .entry(first_cave)
             .or_insert(vec![])
-            .push(second_cave.to_string());
+            .push(second_cave);
         // Bidirectional cave systems
         cave_system
-            .entry(second_cave.to_string())
+            .entry(second_cave)
             .or_insert(vec![])
-            .push(first_cave.to_string());
+            .push(first_cave);
     }
     cave_system
 }
 
-fn find_paths(
-    cave_system: &CaveSystem,
-    path: CavePath,
-    used_caves: HashSet<String>,
-) -> Vec<CavePath> {
+fn find_paths<'a>(
+    cave_system: &'a CaveSystem,
+    path: CavePath<'a>,
+    used_caves: HashSet<&str>,
+) -> Vec<CavePath<'a>> {
     let last_cave = &path[path.len() - 1];
-    if last_cave == "end" {
+    if *last_cave == "end" {
         // println!("Found complete path: {:?}", path);
         return vec![path];
     }
@@ -155,14 +155,14 @@ fn find_paths(
     // println!("Path so far: {:?}, used {:?}", path, used_caves);
     let mut v = vec![];
     for possible_next_cave in cave_system.get(last_cave).unwrap() {
-        if used_caves.contains(possible_next_cave) {
+        if used_caves.contains(*possible_next_cave) {
             continue;
         }
         let mut this_path = path.clone();
         this_path.push(possible_next_cave.clone());
         let mut this_used_caves = used_caves.clone();
         if get_cave_type(possible_next_cave) == CaveType::Small {
-            this_used_caves.insert(possible_next_cave.clone());
+            this_used_caves.insert(possible_next_cave);
         }
         // println!("Exploring {:?}, used {:?}", this_path, this_used_caves);
         v.extend(find_paths(cave_system, this_path, this_used_caves))
@@ -175,8 +175,9 @@ fn p1(input: &str) -> i32 {
     // println!("Cave system: {:?}", cave_system);
 
     let mut used_caves = HashSet::new();
-    used_caves.insert("start".to_string());
-    let paths = find_paths(&cave_system, vec!["start".to_string()], used_caves);
+    used_caves.insert("start");
+    let path = vec!["start"];
+    let paths = find_paths(&cave_system, path, used_caves);
     // println!("Paths: {:?}", paths);
     paths.len() as i32
 }
@@ -229,13 +230,13 @@ The slightly larger example above now has 103 paths through it, and the even lar
 Given these new rules, how many paths through this cave system are there?
 */
 
-fn find_paths_p2(
-    cave_system: &CaveSystem,
-    path: CavePath,
-    used_caves: HashSet<String>,
+fn find_paths_p2<'a>(
+    cave_system: &'a CaveSystem,
+    path: CavePath<'a>,
+    used_caves: HashSet<&str>,
     used_2_caves: bool,
-) -> Vec<CavePath> {
-    let last_cave = &path[path.len() - 1];
+) -> Vec<CavePath<'a>> {
+    let last_cave = path[path.len() - 1];
     if last_cave == "end" {
         // println!("Found complete path: {:?}", path);
         return vec![path];
@@ -249,10 +250,10 @@ fn find_paths_p2(
     // );
     let mut v = vec![];
     for possible_next_cave in cave_system.get(last_cave).unwrap() {
-        if possible_next_cave == "start" {
+        if *possible_next_cave == "start" {
             continue;
         }
-        if used_2_caves && used_caves.contains(possible_next_cave) {
+        if used_2_caves && used_caves.contains(*possible_next_cave) {
             continue;
         }
         let mut this_path = path.clone();
@@ -260,7 +261,7 @@ fn find_paths_p2(
         let mut this_used_caves = used_caves.clone();
         let mut this_used_2_caves = used_2_caves;
         if get_cave_type(possible_next_cave) == CaveType::Small {
-            this_used_2_caves |= !this_used_caves.insert(possible_next_cave.clone());
+            this_used_2_caves |= !this_used_caves.insert(possible_next_cave);
         }
         // println!(
         //     "Exploring {:?}, used {:?}, used_2_caves: {:?}",
@@ -280,8 +281,9 @@ fn p2(input: &str) -> i32 {
     let cave_system = parse_cave_system(input);
     // println!("Cave system: {:?}", cave_system);
     let mut used_caves = HashSet::new();
-    used_caves.insert("start".to_string());
-    let paths = find_paths_p2(&cave_system, vec!["start".to_string()], used_caves, false);
+    used_caves.insert("start");
+    let path = vec!["start"];
+    let paths = find_paths_p2(&cave_system, path, used_caves, false);
     // println!("Paths: {:?}", paths);
     paths.len() as i32
 }
