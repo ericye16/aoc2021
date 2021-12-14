@@ -189,16 +189,8 @@ fn count_diff(polymer_pairs: &PolymerPairs) -> i64 {
         // *frequencies.entry(pair.1).or_insert(0) += 1;
     }
     *frequencies.entry(polymer_pairs.last).or_insert(0) += 1;
-    let mut maxn = frequencies[&polymer_pairs.first];
-    let mut minn = frequencies[&polymer_pairs.first];
-    for (_, ch_cnt) in frequencies {
-        if ch_cnt < minn {
-            minn = ch_cnt;
-        }
-        if ch_cnt > maxn {
-            maxn = ch_cnt;
-        }
-    }
+    let maxn = *frequencies.values().max().unwrap();
+    let minn = *frequencies.values().min().unwrap();
     // frequencies[&polymer_pairs.first] -= 1;
     maxn - minn
 }
