@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::rngs::mock::StepRng;
 use vec2d::Vec2D;
 
@@ -15,19 +15,9 @@ pub(crate) mod control {
         grid.iter().map(|s| s.iter().sum::<i32>()).sum()
     }
 
-    pub(crate) fn sum_all_2(grid: &Vec<Vec<i32>>) -> i32 {
+    pub(crate) fn random_access(grid: &Vec<Vec<i32>>, rng: &mut StepRng, size: usize) -> i32 {
         let mut s = 0;
-        for w in grid {
-            for g in w {
-                s += *g;
-            }
-        }
-        s
-    }
-
-    pub(crate) fn random_access(grid: &Vec<Vec<i32>>, rng: &mut StepRng) -> i32 {
-        let mut s = 0;
-        let die = Uniform::from(0..100);
+        let die = Uniform::from(0..size);
         for _ in 0..1000 {
             s += grid[die.sample(rng)][die.sample(rng)];
         }
@@ -64,22 +54,6 @@ pub(crate) mod control {
     }
 }
 
-pub fn control_benchmark(c: &mut Criterion) {
-    c.bench_function("control create 100", |b| {
-        b.iter(|| control::create_grid(black_box(100)))
-    });
-    let grid = control::create_grid(100);
-    c.bench_function("control sum 100", |b| b.iter(|| control::sum_all(&grid)));
-    c.bench_function("control sum 2 100", |b| {
-        b.iter(|| control::sum_all_2(&grid))
-    });
-    let mut rng = StepRng::new(4, 1);
-    c.bench_function("control random access 100x100 1000", |b| {
-        b.iter(|| control::random_access(&grid, &mut rng))
-    });
-    c.bench_function("control dijkstra", |b| b.iter(|| control::dijkstra(&grid)));
-}
-
 pub(crate) mod vec2d_tests {
     use std::{cmp::Reverse, collections::BinaryHeap};
 
@@ -89,9 +63,9 @@ pub(crate) mod vec2d_tests {
         grid.iter().sum()
     }
 
-    pub(crate) fn random_access(grid: &vec2d::Vec2D<i32>, rng: &mut StepRng) -> i32 {
+    pub(crate) fn random_access(grid: &vec2d::Vec2D<i32>, rng: &mut StepRng, size: usize) -> i32 {
         let mut s = 0;
-        let die = Uniform::from(0..100);
+        let die = Uniform::from(0..size);
         for _ in 0..1000 {
             s += grid[(die.sample(rng), die.sample(rng))];
         }
@@ -126,26 +100,83 @@ pub(crate) mod vec2d_tests {
     }
 }
 
-pub fn vec2d_benchmark(c: &mut Criterion) {
-    c.bench_function("vec2d create 100", |b| {
-        b.iter(|| Vec2D::new(black_box(100), black_box(100), 1i32))
-    });
-    let grid = Vec2D::new(black_box(100), black_box(100), 1);
-    c.bench_function("vec2d sum 100", |b| b.iter(|| vec2d_tests::sum_all(&grid)));
-    let mut rng = StepRng::new(4, 1);
-    c.bench_function("vec2d random access 100x100 1000", |b| {
-        b.iter(|| vec2d_tests::random_access(&grid, &mut rng))
-    });
-    c.bench_function("vec2d dijkstra", |b| {
-        b.iter(|| vec2d_tests::dijkstra(&grid, 100, 100))
-    });
+pub fn create_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("create");
+    for side_length in [100, 400].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("Control", side_length),
+            side_length,
+            |b, side_length| b.iter(|| control::create_grid(*side_length)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("Vec2D", side_length),
+            side_length,
+            |b, side_length| b.iter(|| Vec2D::new(*side_length, *side_length, 1i32)),
+        );
+    }
 }
 
-/*
-pub fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+pub fn sum_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sum");
+    for side_length in [100, 400].iter() {
+        let control_grid = control::create_grid(*side_length);
+        group.bench_with_input(
+            BenchmarkId::new("Control", side_length),
+            side_length,
+            |b, _| b.iter(|| control::sum_all(&control_grid)),
+        );
+        let vec2d_grid = vec2d::Vec2D::new(*side_length, *side_length, 1i32);
+        group.bench_with_input(
+            BenchmarkId::new("Vec2D", side_length),
+            side_length,
+            |b, _| b.iter(|| vec2d_tests::sum_all(&vec2d_grid)),
+        );
+    }
 }
-*/
 
-criterion_group!(benches, control_benchmark, vec2d_benchmark);
+pub fn random_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("random");
+    for side_length in [100, 400].iter() {
+        let control_grid = control::create_grid(*side_length);
+        let mut rng = StepRng::new(4, 1);
+        group.bench_with_input(
+            BenchmarkId::new("Control", side_length),
+            side_length,
+            |b, size| b.iter(|| control::random_access(&control_grid, &mut rng, *size)),
+        );
+        let vec2d_grid = vec2d::Vec2D::new(*side_length, *side_length, 1i32);
+        let mut rng = StepRng::new(4, 1);
+        group.bench_with_input(
+            BenchmarkId::new("Vec2D", side_length),
+            side_length,
+            |b, size| b.iter(|| vec2d_tests::random_access(&vec2d_grid, &mut rng, *size)),
+        );
+    }
+}
+
+pub fn dijkstra_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("dijkstra");
+    for side_length in [100, 400].iter() {
+        let control_grid = control::create_grid(*side_length);
+        group.bench_with_input(
+            BenchmarkId::new("Control", side_length),
+            side_length,
+            |b, _| b.iter(|| control::dijkstra(&control_grid)),
+        );
+        let vec2d_grid = vec2d::Vec2D::new(*side_length, *side_length, 1i32);
+        group.bench_with_input(
+            BenchmarkId::new("Vec2D", side_length),
+            side_length,
+            |b, size| b.iter(|| vec2d_tests::dijkstra(&vec2d_grid, *size, *size)),
+        );
+    }
+}
+
+criterion_group!(
+    benches,
+    create_benchmark,
+    sum_benchmark,
+    random_benchmark,
+    dijkstra_benchmark,
+);
 criterion_main!(benches);

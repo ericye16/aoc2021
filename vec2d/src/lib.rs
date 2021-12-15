@@ -8,6 +8,7 @@ pub struct Vec2D<T> {
 }
 
 impl<T> Vec2D<T> {
+    #[inline]
     pub fn new(l1: usize, l2: usize, initial: T) -> Vec2D<T>
     where
         T: Copy,
@@ -19,6 +20,7 @@ impl<T> Vec2D<T> {
         }
     }
 
+    #[inline]
     fn get_index(&self, index: (usize, usize)) -> usize {
         let i1 = index.0;
         let i2 = index.1;
@@ -28,6 +30,7 @@ impl<T> Vec2D<T> {
         i2 + i1 * self.l2
     }
 
+    #[inline]
     pub fn iter(&self) -> Vec2DIterator<'_, T> {
         Vec2DIterator {
             idx: 0,
@@ -39,12 +42,14 @@ impl<T> Vec2D<T> {
 impl<T> Index<(usize, usize)> for Vec2D<T> {
     type Output = T;
 
+    #[inline]
     fn index(&self, index: (usize, usize)) -> &Self::Output {
         self.data.index(self.get_index(index))
     }
 }
 
 impl<T> IndexMut<(usize, usize)> for Vec2D<T> {
+    #[inline]
     fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
         self.data.index_mut(self.get_index(index))
     }
@@ -61,6 +66,7 @@ where
 {
     type Item = T;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.idx >= self.vec2d.l1 * self.vec2d.l2 {
             None
@@ -71,4 +77,3 @@ where
         }
     }
 }
-
