@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
@@ -73,7 +76,6 @@ fn p2(input: &str) -> u32 {
 
     let w = input[0].len();
     let l = input.len();
-    println!("Length: {}, width: {}", l, w);
     let mut costs = vec![vec![u32::MAX; w]; l];
     let mut queue = BinaryHeap::from([(Reverse(0), 0i32, 0i32)]);
     while let Some((Reverse(cost), x, y)) = queue.pop() {
@@ -110,6 +112,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     const INPUT: &str = "1163751742
     1381373672
@@ -130,5 +133,17 @@ mod tests {
     #[test]
     fn test_p2() {
         assert_eq!(p2(INPUT), 315);
+    }
+
+    #[bench]
+    fn bench_p1(b: &mut Bencher) {
+        let input = common::read_file("d15.txt");
+        b.iter(|| p1(&input))
+    }
+
+    #[bench]
+    fn bench_p2(b: &mut Bencher) {
+        let input = common::read_file("d15.txt");
+        b.iter(|| p2(&input))
     }
 }
