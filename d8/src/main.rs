@@ -72,8 +72,8 @@ In the output values, how many times do digits 1, 4, 7, or 8 appear?
 
 // Gives list of lengths of segments
 fn read_line_for_p1(input: &str) -> Vec<i32> {
-    let ouputs = input.trim().split("|").collect::<Vec<&str>>()[1];
-    ouputs.trim().split(" ").map(|s| s.len() as i32).collect()
+    let ouputs = input.trim().split('|').collect::<Vec<&str>>()[1];
+    ouputs.trim().split(' ').map(|s| s.len() as i32).collect()
 }
 
 fn p1(input: &str) -> i32 {
@@ -244,16 +244,16 @@ fn process_digit(digit: &str, possibilities: &mut Possibilities) {
     */
     match digit.len() {
         2 => {
-            eliminate(&DIGIT_SPECS.get(&1).unwrap(), digit, possibilities);
+            eliminate(DIGIT_SPECS.get(&1).unwrap(), digit, possibilities);
         }
         4 => {
-            eliminate(&DIGIT_SPECS.get(&4).unwrap(), digit, possibilities);
+            eliminate(DIGIT_SPECS.get(&4).unwrap(), digit, possibilities);
         }
         3 => {
-            eliminate(&DIGIT_SPECS.get(&7).unwrap(), digit, possibilities);
+            eliminate(DIGIT_SPECS.get(&7).unwrap(), digit, possibilities);
         }
         7 => {
-            eliminate(&DIGIT_SPECS.get(&8).unwrap(), digit, possibilities);
+            eliminate(DIGIT_SPECS.get(&8).unwrap(), digit, possibilities);
         }
         _ => (),
     };
@@ -291,7 +291,7 @@ fn propagate_possibilities(possibilities: &mut Possibilities) -> bool {
                     continue;
                 }
                 modified |= segment_i_possibilities.remove(&true_segment);
-                if segment_i_possibilities.len() == 0 {
+                if segment_i_possibilities.is_empty() {
                     return false;
                 }
             }
@@ -301,7 +301,7 @@ fn propagate_possibilities(possibilities: &mut Possibilities) -> bool {
 }
 
 fn segments_to_number(segments: &BTreeSet<u8>) -> Option<u8> {
-    REVERSE_MAP.get(&segments).copied()
+    REVERSE_MAP.get(segments).copied()
 }
 
 fn segments_to_segments(segments: &str, trial: &Trial) -> BTreeSet<u8> {
@@ -366,17 +366,17 @@ fn search(mut possibilities: Possibilities, digits: &[&str]) -> Option<(Trial, V
 // Does an algorithm exist for this? idk
 // Do two passes, one where we go through
 fn p2_single_line(input: &str) -> i32 {
-    let single_line_parts: Vec<&str> = input.split("|").collect();
+    let single_line_parts: Vec<&str> = input.split('|').collect();
     let left_part = single_line_parts[0].trim();
     let right_part = single_line_parts[1].trim();
     let mut possibilities = create_all_possibilities();
     let mut all_digits = vec![];
-    for digit in left_part.split(" ") {
+    for digit in left_part.split(' ') {
         process_digit(digit, &mut possibilities);
         // display_possibility(&possibilities);
         all_digits.push(digit);
     }
-    for digit in right_part.split(" ") {
+    for digit in right_part.split(' ') {
         process_digit(digit, &mut possibilities);
         all_digits.push(digit);
     }
@@ -391,8 +391,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d8.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

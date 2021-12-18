@@ -12,8 +12,7 @@ fn parse_input(input: &str) -> Grid {
         .map(str::trim)
         .map(str::chars)
         .map(|c| {
-            c.map(|ch| char::to_digit(ch, 10))
-                .flatten()
+            c.filter_map(|ch| char::to_digit(ch, 10))
                 .map(|i| i as u8)
                 .collect::<Vec<u8>>()
         })
@@ -105,8 +104,8 @@ fn p2(input: &str) -> u32 {
 fn main() {
     println!("Tiled input: {:?}", tile_input(&vec![vec![8]]));
     let input = common::read_file("d15.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

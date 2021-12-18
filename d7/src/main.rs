@@ -38,7 +38,7 @@ type Crabs = Vec<i32>;
 fn parse_input(input: &str) -> Crabs {
     input
         .trim()
-        .split(",")
+        .split(',')
         .map(|s| s.parse().unwrap())
         .collect()
 }
@@ -52,7 +52,7 @@ sort and find half point?
 
 fn p1(input: &str) -> i32 {
     let mut crabs = parse_input(input);
-    crabs.sort();
+    crabs.sort_unstable();
     let pt = crabs[crabs.len() / 2];
     crabs.iter().fold(0, |acc, x| acc + (pt - x).abs())
 }
@@ -107,8 +107,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d7.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

@@ -123,7 +123,7 @@ fn parse_cave_system(input: &str) -> CaveSystem {
     let mut cave_system: CaveSystem = HashMap::new();
     for line in input.lines() {
         let line = line.trim();
-        let cave_connections: Vec<&str> = line.split("-").collect();
+        let cave_connections: Vec<&str> = line.split('-').collect();
         let first_cave = cave_connections[0];
         let second_cave = cave_connections[1];
         cave_system
@@ -290,8 +290,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d12.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

@@ -219,8 +219,8 @@ fn p2(input: &str) -> i64 {
 
 fn main() {
     let input = common::read_file("d14.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

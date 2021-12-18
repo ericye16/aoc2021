@@ -108,7 +108,7 @@ The transparent paper is pretty big, so for now, focus on just completing the fi
 How many dots are visible after completing just the first fold instruction on your transparent paper?*/
 
 fn parse_pair(input: &str) -> Option<(i32, i32)> {
-    let input: Vec<&str> = input.split(",").collect();
+    let input: Vec<&str> = input.split(',').collect();
     if input.len() != 2 {
         return None;
     }
@@ -122,13 +122,11 @@ enum Fold {
 }
 
 fn parse_fold(input: Option<&str>) -> Option<Fold> {
-    if let None = input {
-        return None;
-    }
+    input?;
     let input = input.unwrap();
     let i: i32;
     let along: String;
-    let mut words = input.split(" ");
+    let mut words = input.split(' ');
     if words.next() != Some("fold") {
         return None;
     }
@@ -247,8 +245,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d13.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

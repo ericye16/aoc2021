@@ -65,13 +65,13 @@ fn transition(population: &mut Population) {
 }
 
 fn count_fish(population: &Population) -> i64 {
-    population.iter().fold(0, |acc, x| acc + x)
+    population.iter().sum()
 }
 
 fn parse_to_fishes(input: &str) -> Population {
     let mut population = [0; 9];
     input
-        .split(",")
+        .split(',')
         .map(|f| f.parse::<i32>().unwrap())
         .for_each(|fish_count| population[fish_count as usize] += 1);
     population
@@ -107,8 +107,8 @@ fn p2(input: &str) -> i64 {
 
 fn main() -> Result<()> {
     let input = common::read_file("d6.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
     Ok(())
 }
 

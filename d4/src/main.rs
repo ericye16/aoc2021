@@ -74,7 +74,7 @@ fn parse_card(lines: &mut std::str::Lines) -> Result<Card> {
         let values = lines
             .next()
             .unwrap()
-            .split(" ")
+            .split(' ')
             .filter_map(|s| s.parse::<u32>().ok())
             .collect::<Vec<u32>>();
         for col in 0..5 {
@@ -88,7 +88,7 @@ fn parse_input(input: &str) -> Result<(Sequence, Vec<Card>)> {
     let mut lines = input.lines();
     let first_line = lines.next().unwrap();
     let sequence: Sequence = first_line
-        .split(",")
+        .split(',')
         .map(|s| s.parse::<u32>())
         .collect::<Result<Vec<u32>, ParseIntError>>()?;
     let mut cards = vec![];
@@ -115,7 +115,7 @@ fn is_winning(card: &Card, already_called: &HashSet<u32>) -> bool {
             return true;
         }
     }
-    return false;
+    false
 }
 
 fn calculate_score(card: &Card, already_called: &HashSet<u32>, just_called: u32) -> u32 {
@@ -231,7 +231,7 @@ mod tests {
 22 11 13  6  5
  2  0 12  3  7";
 
-        let (sequence, cards) = parse_input(&input).unwrap();
+        let (sequence, cards) = parse_input(input).unwrap();
 
         assert_eq!(p1(&sequence, &cards).unwrap(), 4512);
     }
@@ -258,7 +258,7 @@ mod tests {
 22 11 13  6  5
  2  0 12  3  7";
 
-        let (sequence, cards) = parse_input(&input).unwrap();
+        let (sequence, cards) = parse_input(input).unwrap();
 
         assert_eq!(p2(&sequence, &cards).unwrap(), 1924);
     }

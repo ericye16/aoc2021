@@ -146,13 +146,13 @@ fn p2(input: &str) -> i32 {
             }
         }
     }
-    basins.iter().take(3).fold(1, |acc, x| acc * x)
+    basins.iter().take(3).product()
 }
 
 fn main() {
     let input = common::read_file("d9.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

@@ -78,7 +78,7 @@ fn p1_single_line(line: &str) -> i32 {
         match ch {
             '{' | '[' | '(' | '<' => stack.push(ch),
             '}' | ']' | ')' | '>' => {
-                if stack.len() > 0 && matching(stack[stack.len() - 1]) == ch {
+                if !stack.is_empty() && matching(stack[stack.len() - 1]) == ch {
                     stack.pop();
                 } else {
                     return score(ch);
@@ -115,7 +115,7 @@ fn p2_single_line(line: &str) -> Option<i64> {
         match ch {
             '{' | '[' | '(' | '<' => stack.push(ch),
             '}' | ']' | ')' | '>' => {
-                if stack.len() > 0 && matching(stack[stack.len() - 1]) == ch {
+                if !stack.is_empty() && matching(stack[stack.len() - 1]) == ch {
                     stack.pop();
                 } else {
                     // Corrupt line
@@ -139,18 +139,16 @@ fn p2(input: &str) -> i64 {
     let mut scores: Vec<i64> = input
         .trim()
         .lines()
-        .map(|s| s.trim())
-        .map(p2_single_line)
-        .flatten()
+        .map(|s| s.trim()).filter_map(p2_single_line)
         .collect();
-    scores.sort();
+    scores.sort_unstable();
     scores[scores.len() / 2]
 }
 
 fn main() {
     let input = common::read_file("d10.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

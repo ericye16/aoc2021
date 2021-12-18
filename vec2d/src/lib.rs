@@ -34,7 +34,7 @@ impl<T> Vec2D<T> {
     pub fn iter(&self) -> Vec2DIterator<'_, T> {
         Vec2DIterator {
             idx: 0,
-            vec2d: &self,
+            vec2d: self,
         }
     }
 }

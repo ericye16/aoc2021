@@ -97,11 +97,11 @@ fn add_rightwards(element: &mut Element, val: i32) {
 fn maybe_explode0(pair: &mut Pair, level: i32) -> (Option<i32>, Option<i32>, bool) {
     if level >= 4 {
         // Reduce! Guaranteed to be numbers somehow?
-        return (
+        (
             Some(pair.left.to_number().unwrap()),
             Some(pair.right.to_number().unwrap()),
             true,
-        );
+        )
     } else {
         if let Element::Pair(ref mut p) = &mut pair.left {
             let (l, r, exploded) = maybe_explode0(&mut *p, level + 1);
@@ -129,7 +129,7 @@ fn maybe_explode0(pair: &mut Pair, level: i32) -> (Option<i32>, Option<i32>, boo
                 return (None, r, true);
             }
         }
-        return (None, None, false);
+        (None, None, false)
     }
 }
 
@@ -167,7 +167,7 @@ fn maybe_reduce(pair: &mut Pair) -> bool {
     if split {
         return true;
     }
-    return false;
+    false
 }
 
 fn reduce_to_completion(pair: &mut Pair) {
@@ -233,8 +233,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d18.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

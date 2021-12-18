@@ -416,8 +416,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d11.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]

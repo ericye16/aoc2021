@@ -75,10 +75,10 @@ fn find_min_vx(target: &Target) -> i32 {
             vx,
             vy: 0,
         };
-        while !collision_x(&probe, &target) && probe.vx != 0 {
+        while !collision_x(&probe, target) && probe.vx != 0 {
             probe.step();
         }
-        hit_x = collision_x(&probe, &target);
+        hit_x = collision_x(&probe, target);
     }
     vx
 }
@@ -126,8 +126,8 @@ fn p2(input: &str) -> i32 {
 
 fn main() {
     let input = common::read_file("d17.txt");
-    println!("P1: {}", p1(&input.trim()));
-    println!("P2: {}", p2(&input.trim()));
+    println!("P1: {}", p1(input.trim()));
+    println!("P2: {}", p2(input.trim()));
 }
 
 #[cfg(test)]
