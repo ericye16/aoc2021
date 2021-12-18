@@ -108,8 +108,8 @@ fn maybe_explode0(pair: &mut Pair, level: i32) -> (Option<i32>, Option<i32>, boo
             if exploded {
                 // Left must be passed up
                 // Right can go into right pair (guaranteed to work)
-                if r.is_some() {
-                    add_leftwards(&mut pair.right, r.unwrap());
+                if let Some(r) = r {
+                    add_leftwards(&mut pair.right, r);
                     if level == 3 {
                         pair.left = Element::Number(0);
                     }
@@ -120,8 +120,8 @@ fn maybe_explode0(pair: &mut Pair, level: i32) -> (Option<i32>, Option<i32>, boo
         if let Element::Pair(ref mut p) = &mut pair.right {
             let (l, r, exploded) = maybe_explode0(&mut *p, level + 1);
             if exploded {
-                if l.is_some() {
-                    add_rightwards(&mut pair.left, l.unwrap());
+                if let Some(l) = l {
+                    add_rightwards(&mut pair.left, l);
                     if level == 3 {
                         pair.right = Element::Number(0);
                     }

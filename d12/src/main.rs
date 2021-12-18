@@ -159,7 +159,7 @@ fn find_paths<'a>(
             continue;
         }
         let mut this_path = path.clone();
-        this_path.push(possible_next_cave.clone());
+        this_path.push(possible_next_cave);
         let mut this_used_caves = used_caves.clone();
         if get_cave_type(possible_next_cave) == CaveType::Small {
             this_used_caves.insert(possible_next_cave);
@@ -257,7 +257,7 @@ fn find_paths_p2<'a>(
             continue;
         }
         let mut this_path = path.clone();
-        this_path.push(possible_next_cave.clone());
+        this_path.push(possible_next_cave);
         let mut this_used_caves = used_caves.clone();
         let mut this_used_2_caves = used_2_caves;
         if get_cave_type(possible_next_cave) == CaveType::Small {
