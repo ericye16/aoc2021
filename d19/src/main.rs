@@ -4,7 +4,7 @@ use std::{
     ops::{Add, Sub},
 };
 
-use text_io::{scan, try_scan};
+use text_io::try_scan;
 
 fn p1(input: &str) -> i32 {
     todo!()
@@ -14,6 +14,9 @@ fn p2(input: &str) -> i32 {
     todo!()
 }
 
+type Coord = ndarray::Array1<i32>;
+
+/*
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 struct Coords(i32, i32, i32);
 
@@ -38,6 +41,7 @@ impl Add for Coords {
         Coords(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
     }
 }
+*/
 
 fn maybe_parse_scanner(line: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let id: usize;
@@ -45,7 +49,7 @@ fn maybe_parse_scanner(line: &str) -> Result<usize, Box<dyn std::error::Error>> 
     Ok(id)
 }
 
-fn parse_input(input: &str) -> Vec<HashSet<Coords>> {
+fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
     let mut v = vec![];
     let lines = input.lines().map(str::trim);
     let mut scanner_id = 0;
@@ -63,20 +67,20 @@ fn parse_input(input: &str) -> Vec<HashSet<Coords>> {
             } else {
                 0
             };
-            v[scanner_id].insert(Coords(x, y, z));
+            v[scanner_id].insert(ndarray::array![x, y, z]);
         }
     }
     v
 }
 
 fn count_matching(
-    reference: &HashSet<Coords>,
-    to_align: &HashSet<Coords>,
-    correction: &Coords,
+    reference: &HashSet<Coord>,
+    to_align: &HashSet<Coord>,
+    correction: &Coord,
 ) -> i32 {
     let mut c = 0;
     for target in to_align {
-        let corrected = *target + *correction;
+        let corrected = target + correction;
         if reference.contains(&corrected) {
             c += 1;
         }
@@ -84,14 +88,18 @@ fn count_matching(
     c
 }
 
+fn generate_rotations() -> Vec<ndarray::Array2<i32>> {
+    todo!()
+}
+
 fn try_align(
-    reference: &HashSet<Coords>,
-    to_align: &HashSet<Coords>,
+    reference: &HashSet<Coord>,
+    to_align: &HashSet<Coord>,
     threshold: i32,
-) -> Option<Coords> {
+) -> Option<Coord> {
     for ref_beacon in reference {
         for target_beacon in to_align {
-            let correction = *ref_beacon - *target_beacon;
+            let correction = ref_beacon - target_beacon;
             let num_matching = count_matching(reference, to_align, &correction);
             println!("Correction: {}, matching: {}", correction, num_matching);
             if num_matching >= threshold {

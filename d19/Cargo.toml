@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 common = { path = "../common" }
 text_io = "0.1.9"
+ndarray = "0.15.4"
