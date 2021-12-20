@@ -90,7 +90,7 @@ fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
         if let Ok(s) = maybe_parse_scanner(line) {
             v.push(HashSet::new());
             scanner_id = s;
-        } else if line.len() > 0 {
+        } else if !line.is_empty() {
             let coords = parse_coords(line);
             v[scanner_id].insert(coords);
         }
@@ -159,7 +159,7 @@ fn try_align(
     None
 }
 
-fn coalesce_all(input: &Vec<HashSet<Coord>>) -> (HashSet<Coord>, Vec<Coord>) {
+fn coalesce_all(input: &[HashSet<Coord>]) -> (HashSet<Coord>, Vec<Coord>) {
     let mut known = input[0].clone();
     let mut unmatched: VecDeque<HashSet<Coord>> = input[1..].iter().cloned().collect();
     let mut scanners = vec![array![0, 0, 0]];
@@ -454,7 +454,7 @@ mod tests {
 
     #[test]
     fn test_p() {
-        let input = parse_input(&INPUT);
+        let input = parse_input(INPUT);
         let solution = coalesce_all(&input);
         assert_eq!(p1(&solution), 79);
         assert_eq!(p2(&solution), 3621);
