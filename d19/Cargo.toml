@@ -8,9 +8,9 @@ edition = "2021"
 [dependencies]
 common = { path = "../common" }
 text_io = "0.1.9"
-# ndarray = "0.15.4"
-ndarray = { version = "0.15.0", features = ["blas"] }
-blas-src = { version = "0.8", features = ["accelerate"] }
+ndarray = "0.15.4"
+# ndarray = { version = "0.15.0", features = ["blas"] }
+# blas-src = { version = "0.8", features = ["accelerate"] }
 
 lazy_static = "1.4.0"
 rustc-hash = "1.1.0"

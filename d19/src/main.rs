@@ -1,5 +1,3 @@
-extern crate blas_src;
-
 use rustc_hash::FxHashSet;
 use std::collections::VecDeque;
 
