@@ -276,7 +276,6 @@ dependencies = [
  "common",
  "lazy_static",
  "ndarray",
- "rayon",
  "rustc-hash",
  "text_io",
 ]
