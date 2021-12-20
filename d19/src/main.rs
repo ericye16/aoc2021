@@ -1,3 +1,5 @@
+extern crate blas_src;
+
 use rustc_hash::FxHashSet;
 use std::collections::VecDeque;
 
@@ -160,6 +162,7 @@ fn try_align(
             }
         }
     }
+    println!("Attempts: {}", attempts);
     None
 }
 
@@ -168,11 +171,6 @@ fn coalesce_all(input: &[FxHashSet<Coord>]) -> (FxHashSet<Coord>, Vec<Coord>) {
     let mut unmatched: VecDeque<FxHashSet<Coord>> = input[1..].iter().cloned().collect();
     let mut scanners = vec![array![0, 0, 0]];
     while let Some(to_match) = unmatched.pop_front() {
-        println!(
-            "There are {} scanners remaining to be solved. {} beacons found so far.",
-            unmatched.len(),
-            known.len()
-        );
         if let Some((correction, rotation)) = try_align(&known, &to_match, 12) {
             // add vectors with corrections to known
             for scanned in to_match {
@@ -180,6 +178,11 @@ fn coalesce_all(input: &[FxHashSet<Coord>]) -> (FxHashSet<Coord>, Vec<Coord>) {
                 known.insert(corrected);
             }
             scanners.push(correction);
+            println!(
+                "There are {} scanners remaining to be solved. {} beacons found so far.",
+                unmatched.len(),
+                known.len()
+            );
         } else {
             unmatched.push_back(to_match);
         }
