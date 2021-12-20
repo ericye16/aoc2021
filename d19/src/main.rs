@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 
 use lazy_static::lazy_static;
 use ndarray::*;
-// use ndarray_linalg::*;
 use text_io::try_scan;
 
 type Coord = Array1<i32>;
@@ -10,11 +9,6 @@ type Rotation = Array2<i32>;
 
 lazy_static! {
     static ref ROTATIONS: Vec<Rotation> = generate_rotations();
-    // static ref ROTATION_INV: Vec<Rotation> = ROTATIONS
-    //     .iter()
-    //     .map(|r| r.map(|x| *x as f32).inv().unwrap())
-    //     .map(|ri| ri.map(|x| *x as i32))
-    //     .collect();
 }
 
 fn generate_rotations() -> Vec<Array2<i32>> {
@@ -147,12 +141,13 @@ fn try_align(
     to_align: &HashSet<Coord>,
     threshold: i32,
 ) -> Option<(Coord, Rotation)> {
-    for ref_beacon in reference {
-        for target_beacon in to_align {
-            for rotation in ROTATIONS.iter() {
+    for target_beacon in to_align {
+        for rotation in ROTATIONS.iter() {
+            let rotated_target = rotation.dot(target_beacon);
+            for ref_beacon in reference {
                 // we want reference = rotation.dot(target) + correction
                 // so correction = reference - rotation.dot(target)
-                let correction = ref_beacon - rotation.dot(target_beacon);
+                let correction = ref_beacon - &rotated_target;
                 let num_matching = count_matching(reference, to_align, &correction, rotation);
                 // println!("Correction: {}, matching: {}", correction, num_matching);
                 if num_matching >= threshold {
@@ -188,19 +183,16 @@ fn coalesce_all(input: &Vec<HashSet<Coord>>) -> (HashSet<Coord>, Vec<Coord>) {
     (known, scanners)
 }
 
-fn p1(input: &str) -> i32 {
-    let input = parse_input(input);
-    coalesce_all(&input).0.len() as i32
+fn p1(solution: &(HashSet<Coord>, Vec<Coord>)) -> i32 {
+    solution.0.len() as i32
 }
 
 fn manhattan_dist(a: &Coord, b: &Coord) -> i32 {
     (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs()
 }
 
-fn p2(input: &str) -> i32 {
-    let input = parse_input(input);
-    let scanners = coalesce_all(&input).1;
-
+fn p2(solution: &(HashSet<Coord>, Vec<Coord>)) -> i32 {
+    let scanners = &solution.1;
     let mut m = 0;
     for i in 0..scanners.len() {
         for j in 0..scanners.len() {
@@ -217,8 +209,10 @@ fn p2(input: &str) -> i32 {
 }
 fn main() {
     let input = common::read_file("d19.txt");
-    println!("P1: {}", p1(input.trim()));
-    println!("P2: {}", p2(input.trim()));
+    let input = parse_input(&input);
+    let solution = coalesce_all(&input);
+    println!("P1: {}", p1(&solution));
+    println!("P2: {}", p2(&solution));
 }
 
 #[cfg(test)]
@@ -459,12 +453,10 @@ mod tests {
     }
 
     #[test]
-    fn test_p1() {
-        assert_eq!(p1(INPUT), 79);
-    }
-
-    #[test]
-    fn test_p2() {
-        assert_eq!(p2(INPUT), 3621);
+    fn test_p() {
+        let input = parse_input(&INPUT);
+        let solution = coalesce_all(&input);
+        assert_eq!(p1(&solution), 79);
+        assert_eq!(p2(&solution), 3621);
     }
 }
