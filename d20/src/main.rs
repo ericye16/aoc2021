@@ -83,8 +83,8 @@ fn p1(input: &str) -> i32 {
     let mut outside = 0;
     (image, outside) = enhance(&image, &algorithm, outside);
     (image, outside) = enhance(&image, &algorithm, outside);
-    let mut s = 0;
     assert_eq!(outside, 0);
+    let mut s = 0;
     for row in &image {
         for pixel in row {
             s += *pixel as i32;
@@ -102,8 +102,8 @@ fn p2(input: &str) -> i32 {
     for _ in 0..50 {
         (image, outside) = enhance(&image, &algorithm, outside);
     }
-    let mut s = 0;
     assert_eq!(outside, 0);
+    let mut s = 0;
     for row in &image {
         for pixel in row {
             s += *pixel as i32;
