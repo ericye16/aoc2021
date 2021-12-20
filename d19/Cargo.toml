@@ -10,4 +10,4 @@ common = { path = "../common" }
 text_io = "0.1.9"
 ndarray = "0.15.4"
 lazy_static = "1.4.0"
-# ndarray-linalg = "0.14.1"
+rustc-hash = "1.1.0"

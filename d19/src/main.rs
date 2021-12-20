@@ -1,4 +1,5 @@
-use std::collections::{HashSet, VecDeque};
+use rustc_hash::FxHashSet;
+use std::collections::VecDeque;
 
 use lazy_static::lazy_static;
 use ndarray::*;
@@ -82,13 +83,13 @@ fn parse_coords(line: &str) -> Array1<i32> {
     array![x, y, z]
 }
 
-fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
+fn parse_input(input: &str) -> Vec<FxHashSet<Coord>> {
     let mut v = vec![];
     let lines = input.lines().map(str::trim);
     let mut scanner_id = 0;
     for line in lines {
         if let Ok(s) = maybe_parse_scanner(line) {
-            v.push(HashSet::new());
+            v.push(FxHashSet::default());
             scanner_id = s;
         } else if !line.is_empty() {
             let coords = parse_coords(line);
@@ -99,8 +100,8 @@ fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
 }
 
 fn count_matching(
-    reference: &HashSet<Coord>,
-    to_align: &HashSet<Coord>,
+    reference: &FxHashSet<Coord>,
+    to_align: &FxHashSet<Coord>,
     correction: &Coord,
     rotation: &Rotation,
 ) -> i32 {
@@ -137,20 +138,23 @@ fn intcos(i: i32) -> i32 {
 }
 
 fn try_align(
-    reference: &HashSet<Coord>,
-    to_align: &HashSet<Coord>,
+    reference: &FxHashSet<Coord>,
+    to_align: &FxHashSet<Coord>,
     threshold: i32,
 ) -> Option<(Coord, Rotation)> {
+    let mut attempts = 0;
     for target_beacon in to_align {
         for rotation in ROTATIONS.iter() {
             let rotated_target = rotation.dot(target_beacon);
             for ref_beacon in reference {
+                attempts += 1;
                 // we want reference = rotation.dot(target) + correction
                 // so correction = reference - rotation.dot(target)
                 let correction = ref_beacon - &rotated_target;
                 let num_matching = count_matching(reference, to_align, &correction, rotation);
                 // println!("Correction: {}, matching: {}", correction, num_matching);
                 if num_matching >= threshold {
+                    println!("Attempts: {}", attempts);
                     return Some((correction, rotation.clone()));
                 }
             }
@@ -159,9 +163,9 @@ fn try_align(
     None
 }
 
-fn coalesce_all(input: &[HashSet<Coord>]) -> (HashSet<Coord>, Vec<Coord>) {
+fn coalesce_all(input: &[FxHashSet<Coord>]) -> (FxHashSet<Coord>, Vec<Coord>) {
     let mut known = input[0].clone();
-    let mut unmatched: VecDeque<HashSet<Coord>> = input[1..].iter().cloned().collect();
+    let mut unmatched: VecDeque<FxHashSet<Coord>> = input[1..].iter().cloned().collect();
     let mut scanners = vec![array![0, 0, 0]];
     while let Some(to_match) = unmatched.pop_front() {
         println!(
@@ -183,7 +187,7 @@ fn coalesce_all(input: &[HashSet<Coord>]) -> (HashSet<Coord>, Vec<Coord>) {
     (known, scanners)
 }
 
-fn p1(solution: &(HashSet<Coord>, Vec<Coord>)) -> i32 {
+fn p1(solution: &(FxHashSet<Coord>, Vec<Coord>)) -> i32 {
     solution.0.len() as i32
 }
 
@@ -191,7 +195,7 @@ fn manhattan_dist(a: &Coord, b: &Coord) -> i32 {
     (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs()
 }
 
-fn p2(solution: &(HashSet<Coord>, Vec<Coord>)) -> i32 {
+fn p2(solution: &(FxHashSet<Coord>, Vec<Coord>)) -> i32 {
     let scanners = &solution.1;
     let mut m = 0;
     for i in 0..scanners.len() {
@@ -435,7 +439,7 @@ mod tests {
             let rotated_r = ROTATIONS
                 .iter()
                 .map(|rm| rm.dot(r))
-                .collect::<HashSet<Array1<i32>>>();
+                .collect::<FxHashSet<Array1<i32>>>();
             println!("r: {}, rotated_r: {:?}", r, rotated_r);
             assert!(rotated_r.contains(&v1[i]));
             assert!(rotated_r.contains(&v2[i]));
