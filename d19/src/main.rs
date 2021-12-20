@@ -1,9 +1,6 @@
-use std::{
-    collections::HashSet,
-    fmt::Display,
-    ops::{Add, Sub},
-};
+use std::collections::HashSet;
 
+use lazy_static::lazy_static;
 use text_io::try_scan;
 
 fn p1(input: &str) -> i32 {
@@ -49,6 +46,19 @@ fn maybe_parse_scanner(line: &str) -> Result<usize, Box<dyn std::error::Error>> 
     Ok(id)
 }
 
+fn parse_coords(line: &str) -> ndarray::Array1<i32> {
+    let coords: Vec<&str> = line.split(',').collect();
+    assert!(coords.len() >= 2);
+    let x = coords[0].parse().unwrap();
+    let y = coords[1].parse().unwrap();
+    let z = if coords.len() == 3 {
+        coords[2].parse().unwrap()
+    } else {
+        0
+    };
+    ndarray::array![x, y, z]
+}
+
 fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
     let mut v = vec![];
     let lines = input.lines().map(str::trim);
@@ -58,16 +68,8 @@ fn parse_input(input: &str) -> Vec<HashSet<Coord>> {
             v.push(HashSet::new());
             scanner_id = s;
         } else if line.len() > 0 {
-            let coords: Vec<&str> = line.split(',').collect();
-            assert!(coords.len() >= 2);
-            let x = coords[0].parse().unwrap();
-            let y = coords[1].parse().unwrap();
-            let z = if coords.len() == 3 {
-                coords[2].parse().unwrap()
-            } else {
-                0
-            };
-            v[scanner_id].insert(ndarray::array![x, y, z]);
+            let coords = parse_coords(line);
+            v[scanner_id].insert(coords);
         }
     }
     v
@@ -88,8 +90,80 @@ fn count_matching(
     c
 }
 
+fn intsin(i: i32) -> i32 {
+    match i % 4 {
+        0 => 0,
+        1 => 1,
+        2 => 0,
+        3 => -1,
+        _ => unreachable!(),
+    }
+}
+
+fn intcos(i: i32) -> i32 {
+    match i % 4 {
+        0 => 1,
+        1 => 0,
+        2 => -1,
+        3 => 0,
+        _ => unreachable!(),
+    }
+}
+
+lazy_static! {
+    static ref ROTATIONS: Vec<ndarray::Array2<i32>> = generate_rotations();
+}
+
 fn generate_rotations() -> Vec<ndarray::Array2<i32>> {
-    todo!()
+    // Four rotations about the x axis (only roll)
+    let rotations: Vec<ndarray::Array2<i32>> = (0..4)
+        .map(|roll| {
+            ndarray::array![
+                [1, 0, 0],
+                [0, intcos(roll), -intsin(roll)],
+                [0, intsin(roll), intcos(roll)],
+            ]
+        })
+        .collect();
+
+    let mut v = vec![];
+
+    // +/- x
+    for yaw in [0, 2] {
+        let m = ndarray::array![
+            [intcos(yaw), -intsin(yaw), 0],
+            [intsin(yaw), intcos(yaw), 0],
+            [0, 0, 1]
+        ];
+        for rotation in &rotations {
+            v.push(m.dot(rotation));
+        }
+    }
+
+    // +/- y
+    for yaw in [1, 3] {
+        let m = ndarray::array![
+            [intcos(yaw), -intsin(yaw), 0],
+            [intsin(yaw), intcos(yaw), 0],
+            [0, 0, 1]
+        ];
+        for rotation in &rotations {
+            v.push(m.dot(rotation));
+        }
+    }
+
+    // +/- z
+    for pitch in [1, 3] {
+        let m = ndarray::array![
+            [intcos(pitch), 0, intsin(pitch)],
+            [0, 1, 0],
+            [-intsin(pitch), 0, intcos(pitch)]
+        ];
+        for rotation in &rotations {
+            v.push(m.dot(rotation));
+        }
+    }
+    v
 }
 
 fn try_align(
@@ -111,20 +185,6 @@ fn try_align(
 }
 
 fn main() {
-    let twod = parse_input(
-        "--- scanner 0 ---
-    0,2
-    4,1
-    3,3
-    
-    --- scanner 1 ---
-    -1,-1
-    -5,0
-    -2,1",
-    );
-    println!("{:?}", twod);
-    let correction = try_align(&twod[0], &twod[1], 3);
-    println!("Position of scanner 2: {}", correction.unwrap());
     // let input = common::read_file("d19.txt");
     // println!("P1: {}", p1(input.trim()));
     // println!("P2: {}", p2(input.trim()));
@@ -133,6 +193,95 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_2d() {
+        let input = parse_input(
+            "--- scanner 0 ---
+        0,2
+        4,1
+        3,3
+        
+        --- scanner 1 ---
+        -1,-1
+        -5,0
+        -2,1",
+        );
+        let correction = try_align(&input[0], &input[1], 3);
+        assert_eq!(correction.unwrap(), ndarray::array![5, 2, 0]);
+    }
+
+    #[test]
+    fn test_rotations() {
+        let v1 = "-1,-1,1
+        -2,-2,2
+        -3,-3,3
+        -2,-3,1
+        5,6,-4
+        8,0,7"
+            .lines()
+            .map(str::trim)
+            .map(parse_coords)
+            .collect::<Vec<ndarray::Array1<i32>>>();
+
+        let v2 = "1,-1,1
+        2,-2,2
+        3,-3,3
+        2,-1,3
+        -5,4,-6
+        -8,-7,0"
+            .lines()
+            .map(str::trim)
+            .map(parse_coords)
+            .collect::<Vec<ndarray::Array1<i32>>>();
+
+        let v3 = "-1,-1,-1
+        -2,-2,-2
+        -3,-3,-3
+        -1,-3,-2
+        4,6,5
+        -7,0,8"
+            .lines()
+            .map(str::trim)
+            .map(parse_coords)
+            .collect::<Vec<ndarray::Array1<i32>>>();
+
+        let v4 = "1,1,-1
+        2,2,-2
+        3,3,-3
+        1,3,-2
+        -4,-6,5
+        7,0,8"
+            .lines()
+            .map(str::trim)
+            .map(parse_coords)
+            .collect::<Vec<ndarray::Array1<i32>>>();
+
+        let v5 = "1,1,1
+        2,2,2
+        3,3,3
+        3,1,2
+        -6,-4,-5
+        0,7,-8"
+            .lines()
+            .map(str::trim)
+            .map(parse_coords)
+            .collect::<Vec<ndarray::Array1<i32>>>();
+
+        for i in 0..v1.len() {
+            let r = &v1[i];
+            let rotated_r = ROTATIONS
+                .iter()
+                .map(|rm| rm.dot(r))
+                .collect::<HashSet<ndarray::Array1<i32>>>();
+            println!("r: {}, rotated_r: {:?}", r, rotated_r);
+            assert!(rotated_r.contains(&v1[i]));
+            assert!(rotated_r.contains(&v2[i]));
+            assert!(rotated_r.contains(&v3[i]));
+            assert!(rotated_r.contains(&v4[i]));
+            assert!(rotated_r.contains(&v5[i]));
+        }
+    }
 
     #[test]
     fn test_p1() {

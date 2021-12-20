@@ -274,6 +274,7 @@ name = "d19"
 version = "0.1.0"
 dependencies = [
  "common",
+ "lazy_static",
  "ndarray",
  "text_io",
 ]
