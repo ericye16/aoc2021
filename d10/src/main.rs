@@ -139,7 +139,8 @@ fn p2(input: &str) -> i64 {
     let mut scores: Vec<i64> = input
         .trim()
         .lines()
-        .map(|s| s.trim()).filter_map(p2_single_line)
+        .map(|s| s.trim())
+        .filter_map(p2_single_line)
         .collect();
     scores.sort_unstable();
     scores[scores.len() / 2]
