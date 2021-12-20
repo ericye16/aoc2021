@@ -1,3 +1,4 @@
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::FxHashSet;
 use std::collections::VecDeque;
 
@@ -142,25 +143,21 @@ fn try_align(
     to_align: &FxHashSet<Coord>,
     threshold: i32,
 ) -> Option<(Coord, Rotation)> {
-    let mut attempts = 0;
     for target_beacon in to_align {
         for rotation in ROTATIONS.iter() {
             let rotated_target = rotation.dot(target_beacon);
-            for ref_beacon in reference {
-                attempts += 1;
+            if let Some(found) = reference.par_iter().find_any(|&ref_beacon| {
                 // we want reference = rotation.dot(target) + correction
                 // so correction = reference - rotation.dot(target)
                 let correction = ref_beacon - &rotated_target;
                 let num_matching = count_matching(reference, to_align, &correction, rotation);
                 // println!("Correction: {}, matching: {}", correction, num_matching);
-                if num_matching >= threshold {
-                    println!("Attempts: {}", attempts);
-                    return Some((correction, rotation.clone()));
-                }
+                num_matching >= threshold
+            }) {
+                return Some((found - &rotated_target, rotation.clone()));
             }
         }
     }
-    println!("Attempts: {}", attempts);
     None
 }
 
