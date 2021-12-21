@@ -296,6 +296,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "d21"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "text_io",
+]
+
+[[package]]
 name = "d3"
 version = "0.1.0"
 dependencies = [
