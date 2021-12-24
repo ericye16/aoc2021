@@ -7,3 +7,10 @@ pub fn read_file(filename: &str) -> String {
     path.push(filename);
     fs::read_to_string(path).unwrap()
 }
+
+pub fn read_2d(input: &str) -> Vec<Vec<char>> {
+    input
+        .lines()
+        .map(|l| l.chars().collect::<Vec<char>>())
+        .collect()
+}
