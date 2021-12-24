@@ -92,6 +92,10 @@ impl RealProgram {
         let zout = z2 + y2;
         (x_comp_result, zout)
     }
+
+    fn get_required_input(&self, zin: i64) -> i64 {
+        zin % 26 + self.c1
+    }
 }
 
 lazy_static! {
@@ -125,29 +129,32 @@ fn to_number(v: &[i64]) -> i64 {
 
 fn p1() -> i64 {
     let mut solved = false;
-    let mut digits = vec![9];
+    let mut digits = vec![];
     while !solved {
         // println!("Digits: {:?}", digits);
         let mut z = 0;
-        let mut last_x_comp = 0;
         for idx in 0..digits.len() {
             let w = digits[idx];
             let res = PROGRAM[idx].process(w, z);
             z = res.1;
-            last_x_comp = res.0;
         }
-        if PROGRAM[digits.len() - 1].div == 26 && last_x_comp == 1 {
-            // Need to backtrack!
-            let mut last_dig = digits.pop().unwrap();
-            while last_dig == 1 {
-                last_dig = digits.pop().unwrap();
-            }
-            digits.push(last_dig - 1);
-        } else if z == 0 && digits.len() == 14 {
+        if z == 0 && digits.len() == 14 {
             solved = true;
         } else {
-            // iterate
-            digits.push(9);
+            let next_program = &PROGRAM[digits.len()];
+            let next_needed_w = next_program.get_required_input(z);
+            if next_program.div == 26 && next_needed_w <= 9 && next_needed_w >= 1 {
+                digits.push(next_needed_w);
+            } else if next_program.div == 1 {
+                digits.push(9);
+            } else {
+                // backtrack
+                let mut last_dig = digits.pop().unwrap();
+                while last_dig == 1 || PROGRAM[digits.len()].div == 26 {
+                    last_dig = digits.pop().unwrap();
+                }
+                digits.push(last_dig - 1);
+            }
         }
     }
     println!("Digits: {:?}", digits);
@@ -156,29 +163,32 @@ fn p1() -> i64 {
 
 fn p2() -> i64 {
     let mut solved = false;
-    let mut digits = vec![1];
+    let mut digits = vec![];
     while !solved {
         // println!("Digits: {:?}", digits);
         let mut z = 0;
-        let mut last_x_comp = 0;
         for idx in 0..digits.len() {
             let w = digits[idx];
             let res = PROGRAM[idx].process(w, z);
             z = res.1;
-            last_x_comp = res.0;
         }
-        if PROGRAM[digits.len() - 1].div == 26 && last_x_comp == 1 {
-            // Need to backtrack!
-            let mut last_dig = digits.pop().unwrap();
-            while last_dig == 9 {
-                last_dig = digits.pop().unwrap();
-            }
-            digits.push(last_dig + 1);
-        } else if z == 0 && digits.len() == 14 {
+        if z == 0 && digits.len() == 14 {
             solved = true;
         } else {
-            // iterate
-            digits.push(1);
+            let next_program = &PROGRAM[digits.len()];
+            let next_needed_w = next_program.get_required_input(z);
+            if next_program.div == 26 && next_needed_w <= 9 && next_needed_w >= 1 {
+                digits.push(next_needed_w);
+            } else if next_program.div == 1 {
+                digits.push(1);
+            } else {
+                // backtrack
+                let mut last_dig = digits.pop().unwrap();
+                while last_dig == 9 || PROGRAM[digits.len()].div == 26 {
+                    last_dig = digits.pop().unwrap();
+                }
+                digits.push(last_dig + 1);
+            }
         }
     }
     println!("Digits: {:?}", digits);
