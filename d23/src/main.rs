@@ -14,21 +14,31 @@ lazy_static! {
   #.#.#.#.#
   #########"
     );
+    static ref GRID2: Vec<Vec<char>> = common::read_2d(
+        "#############
+#...........#
+###.#.#.#.###
+  #.#.#.#.#
+  #.#.#.#.#
+  #.#.#.#.#
+  #########"
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Position(i32, i32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-struct State2 {
-    animals: [[Position; 2]; 4],
+struct State2<'a> {
+    animals: [Vec<Position>; 4],
     currently_moving: (usize, usize),
     started_from_room: bool,
+    grid: &'a Vec<Vec<char>>,
 }
 
-impl std::fmt::Display for State2 {
+impl std::fmt::Display for State2<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut grid = GRID.clone();
+        let mut grid = self.grid.clone();
         for (idx, animals) in self.animals.iter().enumerate() {
             for (idx0, animal) in animals.iter().enumerate() {
                 if (idx, idx0) == self.currently_moving {
@@ -81,14 +91,13 @@ fn get_col_for(animal: usize) -> i32 {
 
 fn done(state: &State2) -> bool {
     state.animals.iter().enumerate().all(|(idx, animal)| {
-        animal[0] != animal[1]
-            && animal
-                .iter()
-                .all(|Position(r, c)| (*r == 2 || *r == 3) && *c == get_col_for(idx))
+        animal
+            .iter()
+            .all(|Position(r, c)| *r >= 2 && *c == get_col_for(idx))
     })
 }
 
-fn get_position(animal: &(usize, usize), positions: &[[Position; 2]; 4]) -> Position {
+fn get_position(animal: &(usize, usize), positions: &[Vec<Position>; 4]) -> Position {
     positions[animal.0][animal.1].clone()
 }
 
@@ -96,12 +105,19 @@ fn in_hall(target: &Position) -> bool {
     target.0 == 1
 }
 
-fn parse_input(input: &str) -> State2 {
+fn parse_input(input: &str, n: usize) -> State2 {
     let input = common::read_2d(input);
+    let grid: &Vec<Vec<char>> = if n == 2 { &GRID } else { &GRID2 };
     let mut state = State2 {
-        animals: [[Position(0, 0); 2]; 4],
+        animals: [
+            vec![Position(0, 0); n],
+            vec![Position(0, 0); n],
+            vec![Position(0, 0); n],
+            vec![Position(0, 0); n],
+        ],
         currently_moving: (0, 0),
         started_from_room: true,
+        grid,
     };
 
     let mut animals = vec![0; 4];
@@ -148,11 +164,10 @@ fn parse_input(input: &str) -> State2 {
     state
 }
 
-fn p1(input: &str) -> i64 {
-    let state0 = parse_input(input);
+fn solve(initial_state: State2) -> i64 {
     let mut to_explore = BinaryHeap::new();
     let mut visited = HashSet::new();
-    to_explore.push(Reverse((0, state0)));
+    to_explore.push(Reverse((0, initial_state)));
     while let Some(Reverse((energy, state))) = to_explore.pop() {
         if visited.contains(&state) {
             continue;
@@ -175,7 +190,7 @@ fn p1(input: &str) -> i64 {
         // First, try moving current animal, if possible
         for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
             let target = Position(current_position.0 + dr, current_position.1 + dc);
-            if GRID[target.0 as usize][target.1 as usize] == '#' {
+            if state.grid[target.0 as usize][target.1 as usize] == '#' {
                 continue;
             }
             let animal_in_spot = state
@@ -237,8 +252,8 @@ fn p1(input: &str) -> i64 {
             }
         }
         // Pick a new animal and keep trying
-        let new_moving = if state.currently_moving.1 < 1 {
-            (state.currently_moving.0, 1)
+        let new_moving = if state.currently_moving.1 < state.animals[0].len() - 1 {
+            (state.currently_moving.0, state.currently_moving.1 + 1)
         } else {
             ((state.currently_moving.0 + 1) % 4, 0)
         };
@@ -252,8 +267,33 @@ fn p1(input: &str) -> i64 {
     panic!("Ran out of things to try");
 }
 
+fn p1(input: &str) -> i64 {
+    let state0 = parse_input(input, 2);
+    solve(state0)
+}
+
 fn p2(input: &str) -> i64 {
-    todo!()
+    let mut state0 = parse_input(input, 4);
+    for animal in &mut state0.animals {
+        for animal0 in animal {
+            if animal0.0 == 3 {
+                animal0.0 = 5;
+            }
+        }
+    }
+    /* Need to insert
+      #D#C#B#A#
+      #D#B#A#C#
+    */
+    state0.animals[0][2] = Position(3, 9);
+    state0.animals[0][3] = Position(4, 7);
+    state0.animals[1][2] = Position(3, 7);
+    state0.animals[1][3] = Position(4, 5);
+    state0.animals[2][2] = Position(3, 5);
+    state0.animals[2][3] = Position(4, 9);
+    state0.animals[3][2] = Position(3, 5);
+    state0.animals[3][3] = Position(4, 5);
+    solve(state0)
 }
 
 fn main() {
@@ -279,19 +319,19 @@ mod tests {
 ###A#B#C#D###
   #A#B#C#D#
   #########";
-        let state = parse_input(input);
+        let state = parse_input(input, 2);
         assert!(done(&state));
         assert_eq!(p1(input), 0);
     }
 
-    #[ignore]
     #[test]
+    #[ignore]
     fn test_p1() {
         assert_eq!(p1(INPUT), 12521);
     }
 
-    #[ignore]
     #[test]
+    #[ignore]
     fn test_p2() {
         assert_eq!(p2(INPUT), 44169);
     }
