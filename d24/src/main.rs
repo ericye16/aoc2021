@@ -127,7 +127,7 @@ fn to_number(v: &[i64]) -> i64 {
     n
 }
 
-fn p1() -> i64 {
+fn solve(init: i64, other_range: i64, inc: i64) -> i64 {
     let mut solved = false;
     let mut digits = vec![];
     while !solved {
@@ -146,14 +146,14 @@ fn p1() -> i64 {
             if next_program.div == 26 && next_needed_w <= 9 && next_needed_w >= 1 {
                 digits.push(next_needed_w);
             } else if next_program.div == 1 {
-                digits.push(9);
+                digits.push(init);
             } else {
                 // backtrack
                 let mut last_dig = digits.pop().unwrap();
-                while last_dig == 1 || PROGRAM[digits.len()].div == 26 {
+                while last_dig == other_range || PROGRAM[digits.len()].div == 26 {
                     last_dig = digits.pop().unwrap();
                 }
-                digits.push(last_dig - 1);
+                digits.push(last_dig + inc);
             }
         }
     }
@@ -161,38 +161,12 @@ fn p1() -> i64 {
     to_number(&digits)
 }
 
+fn p1() -> i64 {
+    solve(9, 1, -1)
+}
+
 fn p2() -> i64 {
-    let mut solved = false;
-    let mut digits = vec![];
-    while !solved {
-        // println!("Digits: {:?}", digits);
-        let mut z = 0;
-        for idx in 0..digits.len() {
-            let w = digits[idx];
-            let res = PROGRAM[idx].process(w, z);
-            z = res.1;
-        }
-        if z == 0 && digits.len() == 14 {
-            solved = true;
-        } else {
-            let next_program = &PROGRAM[digits.len()];
-            let next_needed_w = next_program.get_required_input(z);
-            if next_program.div == 26 && next_needed_w <= 9 && next_needed_w >= 1 {
-                digits.push(next_needed_w);
-            } else if next_program.div == 1 {
-                digits.push(1);
-            } else {
-                // backtrack
-                let mut last_dig = digits.pop().unwrap();
-                while last_dig == 9 || PROGRAM[digits.len()].div == 26 {
-                    last_dig = digits.pop().unwrap();
-                }
-                digits.push(last_dig + 1);
-            }
-        }
-    }
-    println!("Digits: {:?}", digits);
-    to_number(&digits)
+    solve(1, 9, 1)
 }
 
 fn main() {
