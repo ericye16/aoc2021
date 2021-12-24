@@ -1,5 +1,8 @@
 use core::fmt;
-use std::collections::HashSet;
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet},
+};
 
 use lazy_static::lazy_static;
 
@@ -11,59 +14,19 @@ lazy_static! {
   #.#.#.#.#
   #########"
     );
-    static ref INTERESTING_POSES: Vec<([[Position; 2]; 4], (usize, usize))> = vec![
-        (
-            [
-                [Position(3, 3), Position(3, 9)],
-                [Position(2, 3), Position(2, 7)],
-                [Position(2, 5), Position(3, 7)],
-                [Position(2, 9), Position(3, 5)],
-            ],
-            (0, 0)
-        ),
-        (
-            [
-                [Position(3, 3), Position(3, 9)],
-                [Position(2, 3), Position(2, 7)],
-                [Position(2, 5), Position(3, 7)],
-                [Position(2, 9), Position(3, 5)],
-            ],
-            (1, 1)
-        ),
-        (
-            [
-                [Position(3, 3), Position(3, 9)],
-                [Position(2, 3), Position(1, 4)],
-                [Position(2, 5), Position(3, 7)],
-                [Position(2, 9), Position(3, 5)],
-            ],
-            (2, 0)
-        ),
-        (
-            [
-                [Position(3, 3), Position(3, 9)],
-                [Position(2, 3), Position(1, 4)],
-                [Position(2, 7), Position(3, 7)],
-                [Position(2, 9), Position(3, 5)],
-            ],
-            (3, 1)
-        ),
-    ];
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Position(i32, i32);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct State {
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+struct State2 {
     animals: [[Position; 2]; 4],
     currently_moving: (usize, usize),
-    animal_started_from_room: bool,
-    energy: i64,
-    last_moved: (usize, usize),
+    started_from_room: bool,
 }
 
-impl std::fmt::Display for State {
+impl std::fmt::Display for State2 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut grid = GRID.clone();
         for (idx, animals) in self.animals.iter().enumerate() {
@@ -92,13 +55,7 @@ impl std::fmt::Display for State {
             .map(|s| s.into_iter().collect::<String>())
             .collect::<Vec<String>>()
             .join("\n");
-        write!(
-            f,
-            "{}\n
-        energy = {}\n
-        last_moved = {:?}\n",
-            grids, self.energy, self.last_moved,
-        )
+        write!(f, "{}\n", grids)
     }
 }
 
@@ -122,7 +79,7 @@ fn get_col_for(animal: usize) -> i32 {
     }
 }
 
-fn done(state: &State) -> bool {
+fn done(state: &State2) -> bool {
     state.animals.iter().enumerate().all(|(idx, animal)| {
         animal[0] != animal[1]
             && animal
@@ -135,149 +92,16 @@ fn get_position(animal: &(usize, usize), positions: &[[Position; 2]; 4]) -> Posi
     positions[animal.0][animal.1].clone()
 }
 
-fn can_move(
-    state: &State,
-    target: &Position,
-    already_visited: &HashSet<([[Position; 2]; 4], (usize, usize))>,
-    interesting: bool,
-) -> bool {
-    if GRID[target.0 as usize][target.1 as usize] == '#' {
-        return false;
-    }
-    let mut animals = state.animals.clone();
-    animals[state.currently_moving.0][state.currently_moving.1] = *target;
-    if already_visited.contains(&(animals, state.currently_moving)) {
-        if interesting {
-            println!("Can't move because {:?} is contained", animals);
-        }
-        return false;
-    }
-    for animal in &state.animals {
-        for animal0 in animal {
-            if *animal0 == *target {
-                if interesting {
-                    println!("Can't move because animal is already overlapping");
-                }
-                return false;
-            }
-        }
-    }
-    let current_position = get_position(&state.currently_moving, &state.animals);
-    if current_position.0 == 1 && target.0 == 2 {
-        // Cannot enter not your room
-        if target.1 != get_col_for(state.currently_moving.0) {
-            return false;
-        } else {
-            // target.1 is going to its room
-            // Cannot enter your room if there is another animal in there, that
-            // shouldn't be
-            for (idx, animal) in state.animals.iter().enumerate() {
-                if idx == state.currently_moving.0 {
-                    continue;
-                }
-                for animal0 in animal {
-                    if animal0.1 == target.1 && animal0.0 >= 2 {
-                        return false;
-                    }
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
 fn in_hall(target: &Position) -> bool {
     target.0 == 1
 }
 
-fn rearrange(
-    state: &State,
-    already_visited: &mut HashSet<([[Position; 2]; 4], (usize, usize))>,
-) -> Option<i64> {
-    println!("=======\n{}", state);
-    if INTERESTING_POSES.contains(&(state.animals, state.currently_moving)) {
-        println!("=======\n{}", state);
-    }
-    let interesting = state.animals[0] == [Position(3, 3), Position(3, 9)]
-        && state.animals[1] == [Position(2, 3), Position(1, 4)]
-        && state.animals[3] == [Position(2, 9), Position(3, 5)]
-        && state.currently_moving == (2, 0);
-    if interesting {
-        println!("=+===+=\n{}", state);
-    }
-    if done(&state) {
-        // println!("Found completed state: \n{}", state);
-        return Some(state.energy);
-    }
-    already_visited.insert((state.animals, state.currently_moving));
-    let current_position = get_position(&state.currently_moving, &state.animals);
-    let mut current_min = None;
-    // First, try moving current animal, if possible
-    for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-        let target = Position(current_position.0 + dr, current_position.1 + dc);
-        if can_move(&state, &target, &already_visited, interesting) {
-            if interesting {
-                println!("Going to new target at {:?}", target);
-            }
-            let mut new_state = state.clone();
-            new_state.energy = state.energy + get_energy(&state.currently_moving);
-            new_state.animals[state.currently_moving.0][state.currently_moving.1] = target;
-            new_state.last_moved = new_state.currently_moving;
-            if let Some(new_energy) = rearrange(&new_state, already_visited) {
-                if current_min.is_none() || new_energy < current_min.unwrap() {
-                    current_min = Some(new_energy);
-                }
-            }
-        }
-    }
-    // Don't stop outside rooms
-    if current_position.0 == 1
-        && (current_position.1 == 3
-            || current_position.1 == 5
-            || current_position.1 == 7
-            || current_position.1 == 9)
-    {
-        return current_min;
-    }
-    // If the animal started from hall, cannot stop in hall
-    if !state.animal_started_from_room {
-        if in_hall(&current_position) {
-            return current_min;
-        }
-    }
-    // Pick a new animal and keep trying
-    let new_moving = if state.currently_moving.1 < 1 {
-        (state.currently_moving.0, 1)
-    } else {
-        ((state.currently_moving.0 + 1) % 4, 0)
-    };
-
-    if new_moving == state.last_moved {
-        return current_min;
-    }
-
-    let mut new_state = state.clone();
-    new_state.currently_moving = new_moving;
-    new_state.animal_started_from_room =
-        get_position(&new_state.currently_moving, &new_state.animals).0 >= 2;
-    if let Some(new_energy) = rearrange(&new_state, already_visited) {
-        if current_min.is_none() || new_energy < current_min.unwrap() {
-            current_min = Some(new_energy);
-        }
-    }
-
-    current_min
-}
-
-fn parse_input(input: &str) -> State {
+fn parse_input(input: &str) -> State2 {
     let input = common::read_2d(input);
-    let mut state = State {
+    let mut state = State2 {
         animals: [[Position(0, 0); 2]; 4],
         currently_moving: (0, 0),
-        animal_started_from_room: true,
-        energy: 0,
-        last_moved: (0, 0),
+        started_from_room: true,
     };
 
     let mut animals = vec![0; 4];
@@ -326,10 +150,106 @@ fn parse_input(input: &str) -> State {
 
 fn p1(input: &str) -> i64 {
     let state0 = parse_input(input);
-    println!("Initial state: {}", state0);
-    println!("Positions: {:?}", state0.animals);
-    let mut already_visited = HashSet::new();
-    rearrange(&state0, &mut already_visited).unwrap()
+    let mut to_explore = BinaryHeap::new();
+    let mut visited = HashSet::new();
+    to_explore.push(Reverse((0, state0)));
+    while let Some(Reverse((energy, state))) = to_explore.pop() {
+        if visited.contains(&state) {
+            continue;
+        }
+        visited.insert(state.clone());
+        if done(&state) {
+            return energy;
+        }
+        if visited.len() % 100000 == 0 {
+            println!(
+                "Energy: {}, to explore size: {}, visited size: {}, Current state: \n{}",
+                energy,
+                to_explore.len(),
+                visited.len(),
+                state,
+            );
+        }
+        let current_position = get_position(&state.currently_moving, &state.animals);
+
+        // First, try moving current animal, if possible
+        for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+            let target = Position(current_position.0 + dr, current_position.1 + dc);
+            if GRID[target.0 as usize][target.1 as usize] == '#' {
+                continue;
+            }
+            let animal_in_spot = state
+                .animals
+                .iter()
+                .any(|animal| animal.into_iter().any(|animal0| *animal0 == target));
+            if animal_in_spot {
+                continue;
+            }
+            let mut new_state = state.clone();
+            let new_energy = energy + get_energy(&state.currently_moving);
+            new_state.animals[state.currently_moving.0][state.currently_moving.1] = target;
+            if current_position.0 == 1 && target.0 == 2 {
+                // Cannot enter not your room
+                if target.1 != get_col_for(state.currently_moving.0) {
+                    continue;
+                } else {
+                    // target.1 is going to its room
+                    // Cannot enter your room if there is another animal in there, that
+                    // shouldn't be
+                    let mut other_animal_in_room = false;
+                    for (idx, animal) in state.animals.iter().enumerate() {
+                        // Other animal of the same type is fine
+                        if idx == state.currently_moving.0 {
+                            continue;
+                        }
+                        for animal0 in animal {
+                            if animal0.1 == target.1 && animal0.0 >= 2 {
+                                other_animal_in_room = true;
+                            }
+                        }
+                    }
+                    if other_animal_in_room {
+                        continue;
+                    }
+                }
+            }
+
+            if visited.contains(&new_state) {
+                continue;
+            }
+            to_explore.push(Reverse((new_energy, new_state)));
+        }
+
+        // Otherwise, switch to another animal, if possible
+        // Don't stop outside rooms
+        if current_position.0 == 1
+            && (current_position.1 == 3
+                || current_position.1 == 5
+                || current_position.1 == 7
+                || current_position.1 == 9)
+        {
+            continue;
+        }
+        // If the animal started from hall, cannot stop in hall
+        if !state.started_from_room {
+            if in_hall(&current_position) {
+                continue;
+            }
+        }
+        // Pick a new animal and keep trying
+        let new_moving = if state.currently_moving.1 < 1 {
+            (state.currently_moving.0, 1)
+        } else {
+            ((state.currently_moving.0 + 1) % 4, 0)
+        };
+        let mut new_state = state.clone();
+        new_state.currently_moving = new_moving;
+        if visited.contains(&new_state) {
+            continue;
+        }
+        to_explore.push(Reverse((energy, new_state)));
+    }
+    panic!("Ran out of things to try");
 }
 
 fn p2(input: &str) -> i64 {
@@ -364,13 +284,15 @@ mod tests {
         assert_eq!(p1(input), 0);
     }
 
+    #[ignore]
     #[test]
     fn test_p1() {
         assert_eq!(p1(INPUT), 12521);
     }
 
+    #[ignore]
     #[test]
     fn test_p2() {
-        assert_eq!(p2(INPUT), 2758514936282235);
+        assert_eq!(p2(INPUT), 44169);
     }
 }

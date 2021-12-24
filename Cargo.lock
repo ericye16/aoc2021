@@ -311,6 +311,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "d23"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "lazy_static",
+ "text_io",
+]
+
+[[package]]
 name = "d24"
 version = "0.1.0"
 dependencies = [

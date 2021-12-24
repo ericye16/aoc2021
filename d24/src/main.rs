@@ -130,8 +130,10 @@ fn to_number(v: &[i64]) -> i64 {
 fn solve(init: i64, other_range: i64, inc: i64) -> i64 {
     let mut solved = false;
     let mut digits = vec![];
+    let mut iterations = 0;
     while !solved {
         // println!("Digits: {:?}", digits);
+        iterations += 1;
         let mut z = 0;
         for idx in 0..digits.len() {
             let w = digits[idx];
@@ -157,6 +159,7 @@ fn solve(init: i64, other_range: i64, inc: i64) -> i64 {
             }
         }
     }
+    println!("Iterations: {}", iterations);
     println!("Digits: {:?}", digits);
     to_number(&digits)
 }
