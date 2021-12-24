@@ -1,4 +1,3 @@
-#![feature(array_zip)]
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
