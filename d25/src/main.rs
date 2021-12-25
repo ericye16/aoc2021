@@ -38,14 +38,9 @@ fn p1(input: &str) -> i64 {
     count + 1
 }
 
-fn p2() -> i64 {
-    todo!()
-}
-
 fn main() {
     let input = common::read_file("d25.txt");
-    println!("P1: {:?}", p1(&input));
-    println!("P2: {:?}", p2());
+    println!("P1: {}", p1(&input));
 }
 
 #[cfg(test)]

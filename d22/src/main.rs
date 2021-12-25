@@ -1,3 +1,8 @@
+extern crate jemallocator;
+
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 use std::{
     cmp::{max, min},
     collections::{BTreeMap, BTreeSet},
@@ -78,19 +83,6 @@ fn p1(input: &str) -> usize {
     }
     let num_on = state.into_values().filter(|s| *s == State::On).count();
     num_on
-}
-
-fn split_cuboid(
-    a: &Cuboid,
-    old_state: State,
-    to_split: &Cuboid,
-    split_state: State,
-) -> Vec<(Cuboid, State)> {
-    todo!()
-}
-
-fn split(state: &mut BTreeMap<Cuboid, State>, cuboid: &Cuboid, cuboid_state: State) {
-    todo!()
 }
 
 fn p2(input: &str) -> i64 {

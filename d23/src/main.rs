@@ -1,3 +1,8 @@
+extern crate jemallocator;
+
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 use core::fmt;
 use std::{
     cmp::Reverse,
@@ -29,43 +34,32 @@ lazy_static! {
 struct Position(i32, i32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-struct State2<'a> {
+struct State<'a> {
     animals: [Vec<Position>; 4],
     currently_moving: (usize, usize),
-    started_from_room: bool,
+    occupied_grid: Vec<Vec<char>>,
     grid: &'a Vec<Vec<char>>,
 }
 
-impl std::fmt::Display for State2<'_> {
+impl std::fmt::Display for State<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut grid = self.grid.clone();
         for (idx, animals) in self.animals.iter().enumerate() {
             for (idx0, animal) in animals.iter().enumerate() {
                 if (idx, idx0) == self.currently_moving {
-                    grid[animal.0 as usize][animal.1 as usize] = match idx {
-                        0 => 'A',
-                        1 => 'B',
-                        2 => 'C',
-                        3 => 'D',
-                        _ => panic!(),
-                    };
+                    grid[animal.0 as usize][animal.1 as usize] = animal_to_char(idx);
                 } else {
-                    grid[animal.0 as usize][animal.1 as usize] = match idx {
-                        0 => 'a',
-                        1 => 'b',
-                        2 => 'c',
-                        3 => 'd',
-                        _ => panic!(),
-                    };
+                    grid[animal.0 as usize][animal.1 as usize] =
+                        animal_to_char(idx).to_ascii_lowercase();
                 }
             }
         }
         let grids = grid
             .iter()
-            .map(|s| s.into_iter().collect::<String>())
+            .map(|s| s.iter().collect::<String>())
             .collect::<Vec<String>>()
             .join("\n");
-        write!(f, "{}\n", grids)
+        writeln!(f, "{}", grids)
     }
 }
 
@@ -89,26 +83,62 @@ fn get_col_for(animal: usize) -> i32 {
     }
 }
 
-fn done(state: &State2) -> bool {
-    state.animals.iter().enumerate().all(|(idx, animal)| {
-        animal
-            .iter()
-            .all(|Position(r, c)| *r >= 2 && *c == get_col_for(idx))
-    })
+fn done(state: &State) -> bool {
+    for animal in 0..4 {
+        let room_col = get_col_for(animal) as usize;
+        let num_animals = state.animals[0].len();
+        let expected_animal = animal_to_char(animal);
+        for row in 2..(2 + num_animals) {
+            if state.occupied_grid[row][room_col] != expected_animal {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 fn get_position(animal: &(usize, usize), positions: &[Vec<Position>; 4]) -> Position {
-    positions[animal.0][animal.1].clone()
+    positions[animal.0][animal.1]
 }
 
 fn in_hall(target: &Position) -> bool {
     target.0 == 1
 }
 
-fn parse_input(input: &str, n: usize) -> State2 {
+fn animal_to_char(animal: usize) -> char {
+    match animal {
+        0 => 'A',
+        1 => 'B',
+        2 => 'C',
+        3 => 'D',
+        _ => panic!(),
+    }
+}
+
+fn char_to_animal(ch: char) -> usize {
+    match ch {
+        'A' => 0,
+        'B' => 1,
+        'C' => 2,
+        'D' => 3,
+        _ => panic!(),
+    }
+}
+
+fn set_occupancy(state: &mut State) {
+    state.occupied_grid = state.grid.clone();
+    for (idx, animal) in state.animals.iter().enumerate() {
+        for animal0 in animal {
+            let achar = animal_to_char(idx);
+            state.occupied_grid[animal0.0 as usize][animal0.1 as usize] = achar;
+        }
+    }
+}
+
+fn parse_input(input: &str, n: usize) -> State {
     let input = common::read_2d(input);
     let grid: &Vec<Vec<char>> = if n == 2 { &GRID } else { &GRID2 };
-    let mut state = State2 {
+    let mut state = State {
         animals: [
             vec![Position(0, 0); n],
             vec![Position(0, 0); n],
@@ -116,55 +146,109 @@ fn parse_input(input: &str, n: usize) -> State2 {
             vec![Position(0, 0); n],
         ],
         currently_moving: (0, 0),
-        started_from_room: true,
         grid,
+        occupied_grid: grid.clone(),
     };
 
     let mut animals = vec![0; 4];
     for r in 2..=3 {
         for c in [3, 5, 7, 9] {
-            match input[r][c] {
-                'A' => {
-                    if animals[0] == 0 {
-                        state.animals[0][0] = Position(r as i32, c as i32);
-                        animals[0] += 1;
-                    } else {
-                        state.animals[0][1] = Position(r as i32, c as i32);
-                    }
-                }
-                'B' => {
-                    if animals[1] == 0 {
-                        state.animals[1][0] = Position(r as i32, c as i32);
-                        animals[1] += 1;
-                    } else {
-                        state.animals[1][1] = Position(r as i32, c as i32);
-                    }
-                }
-                'C' => {
-                    if animals[2] == 0 {
-                        state.animals[2][0] = Position(r as i32, c as i32);
-                        animals[2] += 1;
-                    } else {
-                        state.animals[2][1] = Position(r as i32, c as i32);
-                    }
-                }
-                'D' => {
-                    if animals[3] == 0 {
-                        state.animals[3][0] = Position(r as i32, c as i32);
-                        animals[3] += 1;
-                    } else {
-                        state.animals[3][1] = Position(r as i32, c as i32);
-                    }
-                }
-                _ => panic!(),
+            let animal_idx = char_to_animal(input[r][c]);
+            if animals[animal_idx] == 0 {
+                state.animals[animal_idx][0] = Position(r as i32, c as i32);
+                animals[animal_idx] += 1;
+            } else {
+                state.animals[animal_idx][1] = Position(r as i32, c as i32);
             }
         }
     }
-
+    set_occupancy(&mut state);
     state
 }
 
-fn solve(initial_state: State2) -> i64 {
+fn room_ready(state: &State, animal: usize) -> Option<usize> {
+    let room_col = get_col_for(animal) as usize;
+    let room_size = state.animals[0].len();
+    // let mut room_occupied = vec![false; room_size];
+    // Check no wrong animals in room
+    let animal_char = animal_to_char(animal);
+    for row in 2..(room_size + 2) {
+        if state.occupied_grid[row][room_col] != animal_char
+            && state.occupied_grid[row][room_col] != '.'
+        {
+            return None;
+        }
+    }
+    for row in (2..(room_size + 2)).rev() {
+        if state.occupied_grid[row][room_col] == '.' {
+            return Some(row);
+        }
+    }
+    None
+}
+
+fn animal_can_move(state: &State, animal: &(usize, usize)) -> bool {
+    let position = get_position(animal, &state.animals);
+    if position.0 == 1 {
+        // in hallway, can only go home if it's free
+        return room_ready(state, animal.0).is_some();
+    }
+    let room = get_col_for(animal.0);
+    if position.1 != room {
+        // can't be in another room
+        return true;
+    }
+    let num_animals = state.animals[0].len();
+    let expected_char = animal_to_char(animal.0);
+    // If there is any animal that shouldn't be in our room, we can move
+    for r in (position.0 as usize)..(num_animals + 2) {
+        if state.occupied_grid[r][room as usize] != expected_char {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn choose_next_animal(state: &State) -> Option<(usize, usize)> {
+    let mut animal = state.currently_moving;
+    if animal.1 < state.animals[0].len() - 1 {
+        animal.1 += 1;
+    } else {
+        animal.0 += 1;
+        animal.0 %= 4;
+        animal.1 = 0;
+    }
+    while !animal_can_move(state, &animal) {
+        if animal.1 < state.animals[0].len() - 1 {
+            animal.1 += 1;
+        } else {
+            animal.0 += 1;
+            animal.0 %= 4;
+            animal.1 = 0;
+        }
+        if animal == state.currently_moving {
+            return None;
+        }
+    }
+    Some(animal)
+}
+
+fn push_explore_state<'a>(
+    new_state: State<'a>,
+    new_energy: i64,
+    to_explore: &mut BinaryHeap<Reverse<(i64, State<'a>)>>,
+    visited: &HashSet<State>,
+) {
+    if !visited.contains(&new_state) {
+        to_explore.push(Reverse((new_energy, new_state)));
+    }
+}
+
+fn outside_room(col: usize) -> bool {
+    col == 3 || col == 5 || col == 7 || col == 9
+}
+
+fn solve(initial_state: State) -> i64 {
     let mut to_explore = BinaryHeap::new();
     let mut visited = HashSet::new();
     to_explore.push(Reverse((0, initial_state)));
@@ -173,9 +257,6 @@ fn solve(initial_state: State2) -> i64 {
             continue;
         }
         visited.insert(state.clone());
-        if done(&state) {
-            return energy;
-        }
         if visited.len() % 100000 == 0 {
             println!(
                 "Energy: {}, to explore size: {}, visited size: {}, Current state: \n{}",
@@ -185,84 +266,88 @@ fn solve(initial_state: State2) -> i64 {
                 state,
             );
         }
+        if done(&state) {
+            return energy;
+        }
         let current_position = get_position(&state.currently_moving, &state.animals);
 
         // First, try moving current animal, if possible
-        for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-            let target = Position(current_position.0 + dr, current_position.1 + dc);
-            if state.grid[target.0 as usize][target.1 as usize] == '#' {
-                continue;
-            }
-            let animal_in_spot = state
-                .animals
-                .iter()
-                .any(|animal| animal.into_iter().any(|animal0| *animal0 == target));
-            if animal_in_spot {
-                continue;
-            }
-            let mut new_state = state.clone();
-            let new_energy = energy + get_energy(&state.currently_moving);
-            new_state.animals[state.currently_moving.0][state.currently_moving.1] = target;
-            if current_position.0 == 1 && target.0 == 2 {
-                // Cannot enter not your room
-                if target.1 != get_col_for(state.currently_moving.0) {
-                    continue;
-                } else {
-                    // target.1 is going to its room
-                    // Cannot enter your room if there is another animal in there, that
-                    // shouldn't be
-                    let mut other_animal_in_room = false;
-                    for (idx, animal) in state.animals.iter().enumerate() {
-                        // Other animal of the same type is fine
-                        if idx == state.currently_moving.0 {
-                            continue;
-                        }
-                        for animal0 in animal {
-                            if animal0.1 == target.1 && animal0.0 >= 2 {
-                                other_animal_in_room = true;
-                            }
-                        }
-                    }
-                    if other_animal_in_room {
-                        continue;
-                    }
+        if in_hall(&current_position) {
+            let mut clear_path_to_room = true;
+            let target_col = get_col_for(state.currently_moving.0);
+            let hall_range = if target_col > current_position.1 {
+                (current_position.1 + 1)..(target_col + 1)
+            } else {
+                target_col..current_position.1
+            };
+            for hall_col in hall_range {
+                if state.occupied_grid[1][hall_col as usize] != '.' {
+                    clear_path_to_room = false;
                 }
             }
-
-            if visited.contains(&new_state) {
-                continue;
+            if clear_path_to_room {
+                if let Some(final_row) = room_ready(&state, state.currently_moving.0) {
+                    let final_row = final_row as i32;
+                    let distance = (final_row - current_position.0) as i64
+                        + (target_col - current_position.1).abs() as i64;
+                    let new_energy = energy + distance * get_energy(&state.currently_moving);
+                    let mut new_state = state.clone();
+                    new_state.animals[new_state.currently_moving.0][new_state.currently_moving.1] =
+                        Position(final_row, target_col);
+                    set_occupancy(&mut new_state);
+                    push_explore_state(new_state, new_energy, &mut to_explore, &visited);
+                }
             }
-            to_explore.push(Reverse((new_energy, new_state)));
-        }
-
-        // Otherwise, switch to another animal, if possible
-        // Don't stop outside rooms
-        if current_position.0 == 1
-            && (current_position.1 == 3
-                || current_position.1 == 5
-                || current_position.1 == 7
-                || current_position.1 == 9)
-        {
-            continue;
-        }
-        // If the animal started from hall, cannot stop in hall
-        if !state.started_from_room {
-            if in_hall(&current_position) {
-                continue;
+        } else {
+            // Check if animal in room is blocking
+            let mut room_blocked = false;
+            for row_idx in 1..(current_position.0 as usize) {
+                if state.occupied_grid[row_idx][current_position.1 as usize] != '.' {
+                    room_blocked = true;
+                }
+            }
+            if !room_blocked {
+                let hall_row = 1 as usize;
+                let mut col = current_position.1 as usize;
+                while state.occupied_grid[hall_row][col] == '.' {
+                    if outside_room(col) {
+                        col -= 1;
+                        continue;
+                    }
+                    let target = Position(hall_row as i32, col as i32);
+                    let dist = (current_position.0 - target.0) as i64
+                        + (current_position.1 - target.1).abs() as i64;
+                    let mut new_state = state.clone();
+                    let new_energy = energy + dist * get_energy(&state.currently_moving);
+                    new_state.animals[state.currently_moving.0][state.currently_moving.1] = target;
+                    set_occupancy(&mut new_state);
+                    push_explore_state(new_state, new_energy, &mut to_explore, &visited);
+                    col -= 1;
+                }
+                col = current_position.1 as usize + 1;
+                while state.occupied_grid[hall_row][col] == '.' {
+                    if outside_room(col) {
+                        col += 1;
+                        continue;
+                    }
+                    let target = Position(hall_row as i32, col as i32);
+                    let dist = (current_position.0 - target.0) as i64
+                        + (current_position.1 - target.1).abs() as i64;
+                    let mut new_state = state.clone();
+                    let new_energy = energy + dist * get_energy(&state.currently_moving);
+                    new_state.animals[state.currently_moving.0][state.currently_moving.1] = target;
+                    set_occupancy(&mut new_state);
+                    push_explore_state(new_state, new_energy, &mut to_explore, &visited);
+                    col += 1;
+                }
             }
         }
         // Pick a new animal and keep trying
-        let new_moving = if state.currently_moving.1 < state.animals[0].len() - 1 {
-            (state.currently_moving.0, state.currently_moving.1 + 1)
-        } else {
-            ((state.currently_moving.0 + 1) % 4, 0)
-        };
-        let mut new_state = state.clone();
-        new_state.currently_moving = new_moving;
-        if visited.contains(&new_state) {
-            continue;
+        if let Some(new_moving) = choose_next_animal(&state) {
+            let mut new_state = state.clone();
+            new_state.currently_moving = new_moving;
+            push_explore_state(new_state, energy, &mut to_explore, &visited);
         }
-        to_explore.push(Reverse((energy, new_state)));
     }
     panic!("Ran out of things to try");
 }
@@ -293,6 +378,7 @@ fn p2(input: &str) -> i64 {
     state0.animals[2][3] = Position(4, 9);
     state0.animals[3][2] = Position(3, 5);
     state0.animals[3][3] = Position(4, 5);
+    set_occupancy(&mut state0);
     solve(state0)
 }
 
@@ -325,7 +411,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_p1() {
         assert_eq!(p1(INPUT), 12521);
     }

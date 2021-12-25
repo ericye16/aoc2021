@@ -1,5 +1,3 @@
-#![feature(destructuring_assignment)]
-
 use std::cmp::max;
 use text_io::scan;
 

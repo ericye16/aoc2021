@@ -1,5 +1,3 @@
-#![feature(destructuring_assignment)]
-
 fn parse_algorithm(line: &str) -> Vec<u8> {
     line.chars()
         .map(|c| match c {
