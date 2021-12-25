@@ -16,4 +16,4 @@ Most solutions are decently fast but there are some optimization opportunities:
 - Day 23: The solution takes 27 seconds for parts 1 and 2 combined and takes
   ~10 GB of memory. I'm not sure how much I could improve this, actually.
   I know others have must faster solutions though.
-- Day 25: I could make a visualization.
+- ~~Day 25: I could make a visualization.~~
