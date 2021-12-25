@@ -1,5 +1,5 @@
 [package]
-name = "d25"
+name = "d25v"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
+nannou = "0.18"
