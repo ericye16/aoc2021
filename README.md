@@ -13,6 +13,7 @@ Most solutions are decently fast but there are some optimization opportunities:
   seconds and ~15GB of memory on my MacBook Pro. There should be a solution
   using the [inclusion-exclusion principle](https://en.wikipedia.org/wiki/Inclusion–exclusion_principle)
   which would solve this in a much shorter amount of time and with less memory.
-- Day 23: The solution takes ~3s for part 1 and doesn't complete for part 2,
-  since it runs out of memory on my system, so I will be working on
-  optimizing that right now (to get my star)
+- Day 23: The solution takes 27 seconds for parts 1 and 2 combined and takes
+  ~10 GB of memory. I'm not sure how much I could improve this, actually.
+  I know others have must faster solutions though.
+- Day 25: I could make a visualization.
