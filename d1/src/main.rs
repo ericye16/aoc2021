@@ -119,7 +119,7 @@ fn p2(input: &str) -> Result<i32> {
 }
 
 fn main() -> Result<()> {
-    let input = std::fs::read_to_string("d1/data/input.txt")?;
+    let input = common::read_file("d1.txt");
     let increments_p1 = p1(&input)?;
     println!("Increments part 1: {}", increments_p1);
     let increments_p2 = p2(&input)?;
