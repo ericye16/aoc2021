@@ -1,12 +1,10 @@
-
-#include <glog/logging.h>
-
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <numeric>
 #include <string>
 
+#include "glog/logging.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 using bazel::tools::cpp::runfiles::Runfiles;
@@ -30,12 +28,10 @@ int p2(std::ifstream&& ifile) {
   CHECK(ifile.is_open());
   std::deque<int> window = {};
   int a;
-  ifile >> a;
-  window.push_back(a);
-  ifile >> a;
-  window.push_back(a);
-  ifile >> a;
-  window.push_back(a);
+  for (int i = 0; i < 3; i++) {
+    ifile >> a;
+    window.push_back(a);
+  }
   int increments = 0;
   int last = std::accumulate(window.begin(), window.end(), 0);
   while (ifile >> a) {
