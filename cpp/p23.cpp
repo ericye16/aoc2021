@@ -5,12 +5,11 @@
 #include <unordered_set>
 
 #include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
+#include "gflags/gflags.h"
 #include "glog/logging.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
-ABSL_FLAG(std::string, data_file, "d23.txt", "Data file");
+DEFINE_string(data_file, "d23.txt", "Data file");
 
 using bazel::tools::cpp::runfiles::Runfiles;
 
@@ -24,7 +23,6 @@ constexpr size_t HALLWAY_START = 1;
 constexpr size_t HALLWAY_STOP = 12;
 
 constexpr size_t HALLWAY_ROW = 1;
-
 
 size_t animal_to_room(char c) {
   if (c == 'A')
@@ -52,13 +50,13 @@ std::string parse_input(std::ifstream&& infile) {
   return ss.str();
 }
 
-inline size_t rc_to_index(size_t row, size_t col) { return row * COLSIZE + col; }
+size_t rc_to_index(size_t row, size_t col) { return row * COLSIZE + col; }
 
-inline std::pair<size_t, size_t> index_to_rc(size_t index) {
+std::pair<size_t, size_t> index_to_rc(size_t index) {
   return {index / COLSIZE, index % COLSIZE};
 }
 
-inline std::optional<size_t> get_unoccupied_position(char animal,
+std::optional<size_t> get_unoccupied_position(char animal,
                                               std::string_view grid,
                                               size_t num_animals) {
   size_t col = animal_to_room(animal);
@@ -74,7 +72,7 @@ inline std::optional<size_t> get_unoccupied_position(char animal,
   return HALLWAY_ROW;
 }
 
-inline bool is_done(std::string_view grid, size_t room_size) {
+bool is_done(std::string_view grid, size_t room_size) {
   // Check hallway is clear
   /*
   for (size_t col = HALLWAY_START; col < HALLWAY_STOP; col++) {
@@ -95,7 +93,7 @@ inline bool is_done(std::string_view grid, size_t room_size) {
 }
 
 // * inclusive on a, exclusive on b * //
-inline bool hallway_clear_between(std::string_view grid, size_t a, size_t b) {
+bool hallway_clear_between(std::string_view grid, size_t a, size_t b) {
   size_t lo;
   size_t hi;
   if (a > b) {
@@ -113,7 +111,7 @@ inline bool hallway_clear_between(std::string_view grid, size_t a, size_t b) {
   return true;
 }
 
-inline uint64_t energy_for(char animal) {
+uint64_t energy_for(char animal) {
   if (animal == 'A') {
     return 1;
   } else if (animal == 'B') {
@@ -126,15 +124,15 @@ inline uint64_t energy_for(char animal) {
   }
 }
 
-inline bool above_room(size_t col) {
+bool above_room(size_t col) {
   return col == 3 || col == 5 || col == 7 || col == 9;
 }
 
-inline void maybe_insert_new_grid(std::pair<size_t, size_t> target_coords,
+void maybe_insert_new_grid(std::pair<size_t, size_t> target_coords,
                            std::pair<size_t, size_t> current_coords,
                            uint64_t current_energy,
                            std::string_view current_grid,
-                           const absl::flat_hash_set<std::string> visited,
+                           const absl::flat_hash_set<std::string>& visited,
                            MoveQueue* queue) {
   size_t steps = size_t(
       std::abs(int32_t(target_coords.first) - int32_t(current_coords.first)) +
@@ -164,26 +162,28 @@ std::string pretty_grid(std::string_view grid) {
   return ss.str();
 }
 
-uint64_t p1(std::string input) {
-  const size_t num_animals = 2;
+uint64_t solve(std::string input, size_t num_animals) {
   auto queue = MoveQueue();
   queue.emplace(0, input);
   auto visited = absl::flat_hash_set<std::string>();
   while (!queue.empty()) {
     const auto [energy, grid] = queue.top();
     queue.pop();
-    DCHECK(grid.size() == COLSIZE * 5);
+    DCHECK(grid.size() == COLSIZE * (num_animals + 3));
+    static int popped = 0;
+    popped++;
     if (!visited.insert(grid).second) {
       continue;
     }
-    if (visited.size() % 10000 == 0) {
-      std::cout << "Energy: " << energy << ", to explore: " << queue.size()
+    if (visited.size() % 100000 == 0) {
+      LOG(INFO) << "Energy: " << energy << ", popped: " << popped
+                << " to explore: " << queue.size()
                 << ", visited: " << visited.size() << " grid:\n"
                 << pretty_grid(grid) << std::endl;
     }
     visited.insert(grid);
     if (is_done(grid, num_animals)) {
-      std::cout << "Energy: " << energy << ", to explore: " << queue.size()
+      LOG(INFO) << "Energy: " << energy << ", to explore: " << queue.size()
                 << ", visited: " << visited.size() << " grid:\n"
                 << pretty_grid(grid) << std::endl;
       return energy;
@@ -242,10 +242,21 @@ uint64_t p1(std::string input) {
   return UINT64_MAX;
 }
 
+uint64_t p1(std::string input) { return solve(input, 2); }
+
+uint64_t p2(std::string input) {
+  input = input.substr(0, COLSIZE * 3) +
+          "  #D#C#B#A#  "
+          "  #D#B#A#C#  " +
+          input.substr(COLSIZE * 3, COLSIZE * 2);
+  LOG(INFO) << "P2 input: \n" << pretty_grid(input);
+  return solve(input, 4);
+}
+
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
-  absl::ParseCommandLine(argc, argv);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::string error;
   std::unique_ptr<Runfiles> runfiles(Runfiles::Create(argv[0], &error));
 
@@ -254,14 +265,13 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  std::string path =
-      runfiles->Rlocation("__main__/data/" + absl::GetFlag(FLAGS_data_file));
+  std::string path = runfiles->Rlocation("__main__/data/" + FLAGS_data_file);
   const auto v = parse_input(std::ifstream(path));
-  std::cout << "input:\n" << pretty_grid(v) << std::endl;
+  LOG(INFO) << "input:\n" << pretty_grid(v) << std::endl;
   CHECK(v.size() == 13 * 5);
 
   std::cout << "P1: " << p1(v) << std::endl;
-  // std::cout << "P2: " << p2(v) << std::endl;
+  std::cout << "P2: " << p2(v) << std::endl;
 
   return 0;
 }

@@ -38,8 +38,7 @@ cc_binary(
     deps = [
         "@bazel_tools//tools/cpp/runfiles",
         "@com_github_google_glog//:glog",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
+        "@com_github_gflags_gflags//:gflags",
         "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
