@@ -21,7 +21,9 @@ jobs:
       with:
         toolchain: nightly
         override: true
+# Exclude d19v2 which depends on a working BLAS, which I don't want to figure
+# out on github
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --workspace --exclude d19v2
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --workspace --exclude d19v2

@@ -3,3 +3,4 @@ target
 bazel-*
 .vscode
 *.trace
+flamegraph.svg
