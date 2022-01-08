@@ -10,5 +10,8 @@ common = { path = "../common" }
 text_io = "0.1.9"
 ndarray = "0.15.4"
 ndarray-linalg = { version = "0.14.1", features = ["openblas"] }
-blas-src = { version = "0.8", features = ["accelerate"] }
+# MacOs
+# blas-src = { version = "0.8", features = ["accelerate"] }
+# Linux
+blas-src = { version = "0.8", features = ["openblas"] }
 clap = "2.34.0"
