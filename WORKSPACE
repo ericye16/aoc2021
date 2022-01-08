@@ -15,10 +15,10 @@ http_archive(
 )
 
 http_archive(
-  name = "com_google_absl",
-  sha256 = "b4e20d9e752a75c10636675691b1e9c2698e0764cb404987d0ffa77223041c19",
-  urls = ["https://github.com/abseil/abseil-cpp/archive/215105818dfde3174fe799600bb0f3cae233d0bf.zip"],
-  strip_prefix = "abseil-cpp-215105818dfde3174fe799600bb0f3cae233d0bf",
+    name = "com_google_absl",
+    sha256 = "b4e20d9e752a75c10636675691b1e9c2698e0764cb404987d0ffa77223041c19",
+    strip_prefix = "abseil-cpp-215105818dfde3174fe799600bb0f3cae233d0bf",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/215105818dfde3174fe799600bb0f3cae233d0bf.zip"],
 )
 
 http_archive(
@@ -26,4 +26,11 @@ http_archive(
     sha256 = "b601beaf841244de5c5a50d2b2eddd34839788000fa1be4260ce6603ca0d8eb7",
     strip_prefix = "platforms-98939346da932eef0b54cf808622f5bb0928f00b",
     urls = ["https://github.com/bazelbuild/platforms/archive/98939346da932eef0b54cf808622f5bb0928f00b.zip"],
+)
+
+http_archive(
+    name = "re2",
+    sha256 = "3a20f05c57f907f78b817a53f2fb6e48077d2b1d0b17b39caf875c20f262230b",
+    strip_prefix = "re2-2021-11-01",
+    urls = ["https://github.com/google/re2/archive/refs/tags/2021-11-01.zip"],
 )

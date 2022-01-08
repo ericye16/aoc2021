@@ -2,12 +2,12 @@
 #include <iostream>
 #include <numeric>
 #include <optional>
-#include <regex>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "glog/logging.h"
+#include "re2/re2.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 ABSL_FLAG(std::string, data_file, "d22.txt", "File to read");
@@ -22,23 +22,16 @@ struct Cube {
 
 std::vector<std::pair<Cube, bool>> parse_input(std::ifstream&& ifile) {
   CHECK(ifile.is_open());
-  std::regex line(
+  RE2 pattern(
       R"##(([a-z]+) x=([\d\-]+)..([\d\-]+),y=([\d\-]+)..([\d\-]+),z=([\d\-]+)..([\d\-]+))##");
   auto v = std::vector<std::pair<Cube, bool>>();
   for (std::string s; std::getline(ifile, s);) {
-    std::smatch matches;
-    CHECK(std::regex_match(s, matches, line));
+    Cube cube;
+    std::string on_or_off;
+    CHECK(RE2::FullMatch(s, pattern, &on_or_off, &cube.xmin, &cube.xmax,
+                         &cube.ymin, &cube.ymax, &cube.zmin, &cube.zmax));
 
-    v.emplace_back(
-        Cube{
-            .xmin = std::stoi(matches[2]),
-            .xmax = std::stoi(matches[3]),
-            .ymin = std::stoi(matches[4]),
-            .ymax = std::stoi(matches[5]),
-            .zmin = std::stoi(matches[6]),
-            .zmax = std::stoi(matches[7]),
-        },
-        matches[1] == "on");
+    v.emplace_back(std::move(cube), on_or_off == "on");
   }
   return v;
 }
