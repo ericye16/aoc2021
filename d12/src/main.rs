@@ -4,8 +4,6 @@ type Cave<'a> = &'a str;
 
 type CaveSystem<'a> = HashMap<Cave<'a>, Vec<Cave<'a>>>;
 
-type CavePath<'a> = Vec<Cave<'a>>;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CaveType {
     Small,
@@ -42,94 +40,69 @@ fn parse_cave_system(input: &str) -> CaveSystem {
     cave_system
 }
 
-fn find_paths<'a>(
-    cave_system: &'a CaveSystem,
-    path: CavePath<'a>,
-    used_caves: HashSet<&str>,
-) -> Vec<CavePath<'a>> {
-    let last_cave = &path[path.len() - 1];
-    if *last_cave == "end" {
-        // println!("Found complete path: {:?}", path);
-        return vec![path];
+fn find_paths<'a>(cave_system: &'a CaveSystem, last_cave: &str, used_caves: HashSet<&str>) -> i32 {
+    if last_cave == "end" {
+        return 1;
     }
     if !cave_system.contains_key(last_cave) {
         panic!("Cave system doesn't contain us")
     }
-    // println!("Path so far: {:?}, used {:?}", path, used_caves);
-    let mut v = vec![];
+    let mut num_caves = 0;
     for possible_next_cave in cave_system.get(last_cave).unwrap() {
         if used_caves.contains(*possible_next_cave) {
             continue;
         }
-        let mut this_path = path.clone();
-        this_path.push(possible_next_cave);
         let mut this_used_caves = used_caves.clone();
         if get_cave_type(possible_next_cave) == CaveType::Small {
             this_used_caves.insert(possible_next_cave);
         }
-        // println!("Exploring {:?}, used {:?}", this_path, this_used_caves);
-        v.extend(find_paths(cave_system, this_path, this_used_caves))
+        num_caves += find_paths(cave_system, possible_next_cave, this_used_caves);
     }
-    v
+    num_caves
 }
 
 fn p1(input: &str) -> i32 {
     let cave_system = parse_cave_system(input);
-    // println!("Cave system: {:?}", cave_system);
-
     let mut used_caves = HashSet::new();
     used_caves.insert("start");
-    let path = vec!["start"];
-    let paths = find_paths(&cave_system, path, used_caves);
-    // println!("Paths: {:?}", paths);
-    paths.len() as i32
+    let paths = find_paths(&cave_system, "start", used_caves);
+    paths
 }
 
 fn find_paths_p2<'a>(
     cave_system: &'a CaveSystem,
-    path: CavePath<'a>,
+    last_cave: &str,
     used_caves: HashSet<&str>,
     used_2_caves: bool,
-) -> Vec<CavePath<'a>> {
-    let last_cave = path[path.len() - 1];
+) -> i32 {
     if last_cave == "end" {
         // println!("Found complete path: {:?}", path);
-        return vec![path];
+        return 1;
     }
     if !cave_system.contains_key(last_cave) {
         panic!("Cave system doesn't contain us")
     }
-    // println!(
-    //     "Path so far: {:?}, used {:?}, used_2_caves: {:}",
-    //     path, used_caves, used_2_caves
-    // );
-    let mut v = vec![];
+    let mut s = 0;
     for possible_next_cave in cave_system.get(last_cave).unwrap() {
         if *possible_next_cave == "start" {
             continue;
         }
-        if used_2_caves && used_caves.contains(*possible_next_cave) {
+        if used_2_caves && used_caves.contains(possible_next_cave) {
             continue;
         }
-        let mut this_path = path.clone();
-        this_path.push(possible_next_cave);
         let mut this_used_caves = used_caves.clone();
         let mut this_used_2_caves = used_2_caves;
         if get_cave_type(possible_next_cave) == CaveType::Small {
             this_used_2_caves |= !this_used_caves.insert(possible_next_cave);
         }
-        // println!(
-        //     "Exploring {:?}, used {:?}, used_2_caves: {:?}",
-        //     this_path, this_used_caves, this_used_2_caves
-        // );
-        v.extend(find_paths_p2(
+        s += find_paths_p2(
             cave_system,
-            this_path,
+            possible_next_cave,
             this_used_caves,
             this_used_2_caves,
-        ))
+        );
     }
-    v
+    s
 }
 
 fn p2(input: &str) -> i32 {
@@ -137,10 +110,9 @@ fn p2(input: &str) -> i32 {
     // println!("Cave system: {:?}", cave_system);
     let mut used_caves = HashSet::new();
     used_caves.insert("start");
-    let path = vec!["start"];
-    let paths = find_paths_p2(&cave_system, path, used_caves, false);
+    let paths = find_paths_p2(&cave_system, "start", used_caves, false);
     // println!("Paths: {:?}", paths);
-    paths.len() as i32
+    paths
 }
 
 fn main() {
