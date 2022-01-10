@@ -9,7 +9,7 @@ enum Cave<'a> {
 }
 type CaveSystem<'a> = HashMap<Cave<'a>, Vec<Cave<'a>>>;
 
-fn to_cave<'a>(cave_name: &'a str) -> Cave<'a> {
+fn to_cave(cave_name: &str) -> Cave {
     match cave_name {
         "start" => Cave::Start,
         "end" => Cave::End,
@@ -43,23 +43,23 @@ fn find_paths<'a>(
     last_cave: &Cave,
     used_caves: HashSet<&Cave>,
 ) -> i32 {
-    match last_cave {
-        Cave::End => 1,
-        _ => {
-            debug_assert!(cave_system.contains_key(&last_cave));
-            let mut num_caves = 0;
-            for possible_next_cave in cave_system.get(&last_cave).unwrap() {
-                if used_caves.contains(possible_next_cave) {
-                    continue;
-                }
+    if let Cave::End = last_cave {
+        1
+    } else {
+        debug_assert!(cave_system.contains_key(last_cave));
+        cave_system
+            .get(last_cave)
+            .unwrap()
+            .iter()
+            .filter(|possible_next_cave| !used_caves.contains(possible_next_cave))
+            .map(|possible_next_cave| {
                 let mut this_used_caves = used_caves.clone();
                 if let Cave::Small(_) = possible_next_cave {
                     this_used_caves.insert(possible_next_cave);
                 }
-                num_caves += find_paths(cave_system, possible_next_cave, this_used_caves);
-            }
-            num_caves
-        }
+                find_paths(cave_system, possible_next_cave, this_used_caves)
+            })
+            .sum()
     }
 }
 
@@ -67,8 +67,7 @@ fn p1(input: &str) -> i32 {
     let cave_system = parse_cave_system(input);
     let mut used_caves = HashSet::new();
     used_caves.insert(&Cave::Start);
-    let paths = find_paths(&cave_system, &Cave::Start, used_caves);
-    paths
+    find_paths(&cave_system, &Cave::Start, used_caves)
 }
 
 fn find_paths_p2<'a>(
@@ -77,32 +76,32 @@ fn find_paths_p2<'a>(
     used_caves: HashSet<&Cave>,
     used_2_caves: bool,
 ) -> i32 {
-    match last_cave {
-        Cave::End => 1,
-        _ => {
-            debug_assert!(cave_system.contains_key(&last_cave));
-            let mut s = 0;
-            for possible_next_cave in cave_system.get(last_cave).unwrap() {
-                if *possible_next_cave == Cave::Start {
-                    continue;
-                }
-                if used_2_caves && used_caves.contains(possible_next_cave) {
-                    continue;
-                }
+    if let Cave::End = last_cave {
+        1
+    } else {
+        debug_assert!(cave_system.contains_key(last_cave));
+        cave_system
+            .get(last_cave)
+            .unwrap()
+            .iter()
+            .filter(|&possible_next_cave| {
+                *possible_next_cave != Cave::Start
+                    && !(used_2_caves && used_caves.contains(possible_next_cave))
+            })
+            .map(|possible_next_cave| {
                 let mut this_used_caves = used_caves.clone();
                 let mut this_used_2_caves = used_2_caves;
                 if let Cave::Small(_) = possible_next_cave {
                     this_used_2_caves |= !this_used_caves.insert(possible_next_cave);
                 }
-                s += find_paths_p2(
+                find_paths_p2(
                     cave_system,
                     possible_next_cave,
                     this_used_caves,
                     this_used_2_caves,
-                );
-            }
-            s
-        }
+                )
+            })
+            .sum()
     }
 }
 
@@ -110,8 +109,7 @@ fn p2(input: &str) -> i32 {
     let cave_system = parse_cave_system(input);
     let mut used_caves = HashSet::new();
     used_caves.insert(&Cave::Start);
-    let paths = find_paths_p2(&cave_system, &Cave::Start, used_caves, false);
-    paths
+    find_paths_p2(&cave_system, &Cave::Start, used_caves, false)
 }
 
 fn main() {
