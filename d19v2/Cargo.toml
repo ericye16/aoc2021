@@ -10,8 +10,10 @@ common = { path = "../common" }
 text_io = "0.1.9"
 ndarray = "0.15.4"
 ndarray-linalg = { version = "0.14.1", features = ["openblas"] }
-# MacOs
-# blas-src = { version = "0.8", features = ["accelerate"] }
-# Linux
-blas-src = { version = "0.8", features = ["openblas"] }
 clap = "2.34.0"
+# Linux
+[target.'cfg(target_os = "linux")'.dependencies]
+blas-src = { version = "0.8", features = ["openblas"] }
+# MacOs
+[target.'cfg(target_os = "macos")'.dependencies]
+blas-src = { version = "0.8", features = ["accelerate"] }
