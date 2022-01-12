@@ -29,11 +29,11 @@ impl Payload {
     }
 }
 
-fn preprocess_packet(input: &str) -> BitVec<Msb0, u8> {
+fn preprocess_packet(input: &str) -> BitVec<u8, Msb0> {
     hex::decode(input).unwrap().view_bits::<Msb0>().to_owned()
 }
 
-fn parse_subpackets(bit_slice: &BitSlice<Msb0, u8>) -> (Vec<Packet>, usize) {
+fn parse_subpackets(bit_slice: &BitSlice<u8, Msb0>) -> (Vec<Packet>, usize) {
     match bit_slice[0] {
         false => {
             // Length type 0 -- then the next 15 bits are a number that represents
@@ -64,7 +64,7 @@ fn parse_subpackets(bit_slice: &BitSlice<Msb0, u8>) -> (Vec<Packet>, usize) {
     }
 }
 
-fn parse_packet(bit_slice: &BitSlice<Msb0, u8>) -> (Packet, usize) {
+fn parse_packet(bit_slice: &BitSlice<u8, Msb0>) -> (Packet, usize) {
     let version = bit_slice[0..3].load_be::<u8>();
     let packet_type = bit_slice[3..6].load_be::<u8>();
     let (payload, next_bit) = match packet_type {
