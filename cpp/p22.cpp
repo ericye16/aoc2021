@@ -15,9 +15,9 @@ ABSL_FLAG(std::string, data_file, "d22.txt", "File to read");
 using bazel::tools::cpp::runfiles::Runfiles;
 
 struct Cube {
-  int xmin, xmax;
-  int ymin, ymax;
-  int zmin, zmax;
+  int64_t xmin, xmax;
+  int64_t ymin, ymax;
+  int64_t zmin, zmax;
 };
 
 std::vector<std::pair<Cube, bool>> parse_input(std::ifstream ifile) {
@@ -64,10 +64,21 @@ std::optional<Cube> clip_cube(const Cube& cube) {
       cube);
 }
 
-int p1(const std::vector<std::pair<Cube, bool>>& steps) {
+enum class Problem {
+  kProblemOne = 1,
+  kProblemTwo = 2,
+};
+
+template <Problem problem>
+int64_t solve(const std::vector<std::pair<Cube, bool>>& steps) {
   auto cubes = std::vector<std::pair<Cube, int>>();
   for (const auto& [cube, on] : steps) {
-    const auto cube_clipped = clip_cube(cube);
+    std::optional<Cube> cube_clipped;
+    if constexpr (problem == Problem::kProblemOne) {
+      cube_clipped = clip_cube(cube);
+    } else {
+      cube_clipped = cube;
+    }
     if (!cube_clipped.has_value()) {
       continue;
     }
@@ -82,33 +93,10 @@ int p1(const std::vector<std::pair<Cube, bool>>& steps) {
     }
     cubes.insert(cubes.end(), intersecting.begin(), intersecting.end());
   }
-  int on = 0;
+  int64_t on = 0;
   for (const auto& [cube, weight] : cubes) {
     on += (cube.xmax - cube.xmin + 1) * (cube.ymax - cube.ymin + 1) *
           (cube.zmax - cube.zmin + 1) * weight;
-  }
-  return on;
-}
-
-int64_t p2(const std::vector<std::pair<Cube, bool>>& steps) {
-  auto cubes = std::vector<std::pair<Cube, int>>();
-  for (const auto& [cube, on] : steps) {
-    auto intersecting = std::vector<std::pair<Cube, int>>();
-    for (const auto& [existing_cube, weight] : cubes) {
-      if (auto intersection = get_intersection(existing_cube, cube)) {
-        intersecting.emplace_back(*intersection, weight * -1);
-      }
-    }
-    if (on) {
-      intersecting.emplace_back(cube, 1);
-    }
-    cubes.insert(cubes.end(), intersecting.begin(), intersecting.end());
-  }
-  int64_t on = 0;
-  for (const auto& [cube, weight] : cubes) {
-    on += int64_t(cube.xmax - cube.xmin + 1) *
-          int64_t(cube.ymax - cube.ymin + 1) *
-          int64_t(cube.zmax - cube.zmin + 1) * weight;
   }
   return on;
 }
@@ -128,8 +116,8 @@ int main(int argc, char** argv) {
       runfiles->Rlocation("__main__/data/" + absl::GetFlag(FLAGS_data_file));
   const auto v = parse_input(std::ifstream(path));
 
-  std::cout << "P1: " << p1(v) << std::endl;
-  std::cout << "P2: " << p2(v) << std::endl;
+  std::cout << "P1: " << solve<Problem::kProblemOne>(v) << std::endl;
+  std::cout << "P2: " << solve<Problem::kProblemTwo>(v) << std::endl;
 
   return 0;
 }
