@@ -20,7 +20,7 @@ struct Cube {
   int zmin, zmax;
 };
 
-std::vector<std::pair<Cube, bool>> parse_input(std::ifstream&& ifile) {
+std::vector<std::pair<Cube, bool>> parse_input(std::ifstream ifile) {
   CHECK(ifile.is_open());
   RE2 pattern(
       R"##(([a-z]+) x=([\d\-]+)..([\d\-]+),y=([\d\-]+)..([\d\-]+),z=([\d\-]+)..([\d\-]+))##");

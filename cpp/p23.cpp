@@ -37,7 +37,7 @@ size_t animal_to_room(char c) {
   }
 }
 
-std::string parse_input(std::ifstream&& infile) {
+std::string parse_input(std::ifstream infile) {
   CHECK(infile.is_open());
   std::stringstream ss;
   for (std::string line; std::getline(infile, line);) {

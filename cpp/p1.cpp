@@ -9,7 +9,7 @@
 
 using bazel::tools::cpp::runfiles::Runfiles;
 
-int p1(std::ifstream&& ifile) {
+int p1(std::ifstream ifile) {
   CHECK(ifile.is_open());
   int last;
   ifile >> last;
@@ -24,7 +24,7 @@ int p1(std::ifstream&& ifile) {
   return increments;
 }
 
-int p2(std::ifstream&& ifile) {
+int p2(std::ifstream ifile) {
   CHECK(ifile.is_open());
   std::deque<int> window = {};
   int a;
