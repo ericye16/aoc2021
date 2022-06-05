@@ -16,9 +16,9 @@ http_archive(
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "b4e20d9e752a75c10636675691b1e9c2698e0764cb404987d0ffa77223041c19",
-    strip_prefix = "abseil-cpp-215105818dfde3174fe799600bb0f3cae233d0bf",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/215105818dfde3174fe799600bb0f3cae233d0bf.zip"],
+    sha256 = "a4567ff02faca671b95e31d315bab18b42b6c6f1a60e91c6ea84e5a2142112c2",
+    strip_prefix = "abseil-cpp-20211102.0",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip"],
 )
 
 http_archive(
@@ -30,7 +30,7 @@ http_archive(
 
 http_archive(
     name = "re2",
-    sha256 = "3a20f05c57f907f78b817a53f2fb6e48077d2b1d0b17b39caf875c20f262230b",
-    strip_prefix = "re2-2021-11-01",
-    urls = ["https://github.com/google/re2/archive/refs/tags/2021-11-01.zip"],
+    sha256 = "9f3b65f2e0c78253fcfdfce1754172b0f97ffdb643ee5fd67f0185acf91a3f28",
+    strip_prefix = "re2-2022-06-01",
+    urls = ["https://github.com/google/re2/archive/refs/tags/2022-06-01.zip"],
 )
