@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
-text_io = "0.1.9"
+text_io = "0.1.10"
 ndarray = "0.15.4"
 ndarray-linalg = { version = "0.14.1", features = ["openblas"] }
 clap = "2.34.0"

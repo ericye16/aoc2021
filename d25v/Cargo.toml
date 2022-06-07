@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
-nannou = "0.18"
+nannou = "0.18.1"
